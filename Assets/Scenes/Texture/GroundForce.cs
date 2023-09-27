@@ -110,9 +110,11 @@ public class GroundForce: MonoBehaviour
         //StoreTransformInfos();
         Time.fixedDeltaTime = 1f / physicsFrequency;
 
-        if (m_hapticThread.isInitialized)
+        if (m_hapticThread != null && hapticsFrequencyText != null)
             hapticsFrequencyText.text = $"haptics : {m_hapticThread.actualFrequency}Hz";
-        physicsFrequencyText.text = $"physics : {physicsFrequency}Hz";
+        if (physicsFrequencyText != null)
+            physicsFrequencyText.text = $"physics : {physicsFrequency}Hz";
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
 #if UNITY_EDITOR
