@@ -84,12 +84,15 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			{
 				return;
 			}
+        	Vector3 point = GetCollisionPoint();
 
-			Vector3 point = GetCollisionPoint();
+
 			Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
 			Plane plane = new Plane(normal, point);
-
+			Debug.Log(11111);
 			await slicer.SliceAsync(plane);
+						Debug.Log(22222);
+
 		}
 
 		private Vector3 GetCollisionPoint()
