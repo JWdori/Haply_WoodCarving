@@ -7,7 +7,6 @@ namespace BzKovSoft.ObjectSlicer
 	/// <summary>
 	/// Interface that implements mesh separation logic
 	/// </summary>
-	/// 
 	public interface IBzMeshSlicer
 	{
 		/// <summary>

@@ -51,19 +51,24 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         public Vector3 physicsCursorPosition;
         public bool isTouching;
     }
-    
+    [Range(-2, 2)]
+    public float forceX;
+    [Range(-2, 2)]
+    public float forceY;
+    [Range(-2, 2)]
+    public float forceZ;
     // HAPTICS
     [Header("Haptics")]
     [Tooltip("Enable/Disable force feedback")]
     public bool forceEnabled;
-    
+
     [Range(0, 800)]
     public float stiffness = 400f;
     [Range(0, 3)]
     public float damping = 1;
-    
+
     private HapticThread m_hapticThread;
-    
+
     // PHYSICS
     [Header("Physics")]
     [Tooltip("Use it to enable friction and mass force feeling")]
@@ -89,29 +94,52 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     public bool collisionDetection;
     public List<Collider> touched = new();
 
-    private void Awake ()
+    private void Awake()
     {
         // find the HapticThread object before the first FixedUpdate() call
         m_hapticThread = FindObjectOfType<HapticThread>();
 
         // create the physics link between physic effector and device cursor
-        AttachCursor( m_hapticThread.avatar.gameObject );
+        AttachCursor(m_hapticThread.avatar.gameObject);
         SetupCollisionDetection();
     }
 
-    private void OnEnable ()
+    private void OnEnable()
     {
         // Run haptic loop with AdditionalData method to get initial values
         if (m_hapticThread.isInitialized)
             m_hapticThread.Run(ForceCalculation, GetAdditionalData());
         else
-            m_hapticThread.onInitialized.AddListener(() => m_hapticThread.Run(ForceCalculation, GetAdditionalData()) );
+            m_hapticThread.onInitialized.AddListener(() => m_hapticThread.Run(ForceCalculation, GetAdditionalData()));
+    }
+    public Vector3 Gravitiy()
+    {
+        float weight = -(0.1391f + 0.1f); // 물체의 무게 뉴턴으로 변환한 값
+
+        Vector3 gravityForce = Vector3.down * (weight);
+        //Debug.Log(gravityForce);
+
+        return gravityForce;
+    }
+    private Vector3 ForceCalculation(in Vector3 position, in Vector3 velocity, in AdditionalData additionalData)
+    {
+        var force = additionalData.physicsCursorPosition - position;
+        force *= stiffness;
+        force -= velocity * damping;
+        if (!forceEnabled || (collisionDetection && !additionalData.isTouching))
+        {
+            // Don't compute forces if there are no collisions which prevents feeling drag/friction while moving through air. 
+            force = new Vector3(forceX, forceY, forceZ);
+        }
+        force += Gravitiy();
+        //Debug.Log(force);
+        return force;
     }
 
-    private void FixedUpdate () =>
+    private void FixedUpdate() =>
         // Update AdditionalData 
-        m_hapticThread.SetAdditionalData( GetAdditionalData() );
-    
+        m_hapticThread.SetAdditionalData(GetAdditionalData());
+
     private void Update()
     {
 #if UNITY_EDITOR
@@ -129,30 +157,30 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// Attach the current physics effector to device end-effector with a joint
     /// </summary>
     /// <param name="cursor">Cursor to attach with</param>
-    private void AttachCursor (GameObject cursor)
+    private void AttachCursor(GameObject cursor)
     {
         // Add kinematic rigidbody to cursor
         var rbCursor = cursor.GetComponent<Rigidbody>();
-        if ( !rbCursor )
+        if (!rbCursor)
         {
             rbCursor = cursor.AddComponent<Rigidbody>();
             rbCursor.useGravity = false;
             rbCursor.isKinematic = true;
         }
-        
+
         // Add non-kinematic rigidbody to self
         m_rigidbody = gameObject.GetComponent<Rigidbody>();
-        if ( !m_rigidbody )
+        if (!m_rigidbody)
         {
             m_rigidbody = gameObject.AddComponent<Rigidbody>();
             m_rigidbody.useGravity = false;
             m_rigidbody.isKinematic = false;
             m_rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
-        
+
         // Connect with cursor rigidbody with a spring/damper joint and locked rotation
         m_joint = gameObject.GetComponent<ConfigurableJoint>();
-        if ( !m_joint )
+        if (!m_joint)
         {
             m_joint = gameObject.AddComponent<ConfigurableJoint>();
             m_joint.connectedBody = rbCursor;
@@ -160,9 +188,9 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
             m_joint.anchor = m_joint.connectedAnchor = Vector3.zero;
             m_joint.axis = m_joint.secondaryAxis = Vector3.zero;
         }
-        
+
         ConfigureJoint();
-        
+
     }
 
     private void ConfigureJoint()
@@ -171,14 +199,14 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         {
             m_joint.xMotion = m_joint.yMotion = m_joint.zMotion = ConfigurableJointMotion.Locked;
             m_joint.angularXMotion = m_joint.angularYMotion = m_joint.angularZMotion = ConfigurableJointMotion.Locked;
-            
+
             m_rigidbody.drag = 0;
         }
         else
         {
             // limited linear movements
             m_joint.xMotion = m_joint.yMotion = m_joint.zMotion = ConfigurableJointMotion.Limited;
-            
+
             // lock rotation to avoid sphere roll caused by physics material friction instead of feel it
             m_joint.angularXMotion = m_joint.angularYMotion = m_joint.angularZMotion = ConfigurableJointMotion.Locked;
 
@@ -192,7 +220,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
                 spring = limitSpring,
                 damper = limitDamper
             };
-            
+
             // stabilize spring connection 
             m_rigidbody.drag = drag;
         }
@@ -202,14 +230,14 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
 
     // HAPTICS
     #region Haptics
-    
+
     /// <summary>
     /// Method used by <see cref="HapticThread.Run(Haply.HardwareAPI.Unity.ForceCalculation1)"/>
     /// and <see cref="HapticThread.GetAdditionalData{T}"/>
     /// to transfer dynamic data between the unity scene and the haptic thread 
     /// </summary>
     /// <returns>Updated AdditionalData struct</returns>
-    private AdditionalData GetAdditionalData ()
+    private AdditionalData GetAdditionalData()
     {
         AdditionalData additionalData;
         additionalData.physicsCursorPosition = transform.localPosition;
@@ -225,19 +253,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// <param name="velocity">cursor velocity</param>
     /// <param name="additionalData">additional scene data synchronized by <see cref="GetAdditionalData"/> method</param>
     /// <returns>Force to apply</returns>
-    private Vector3 ForceCalculation ( in Vector3 position, in Vector3 velocity, in AdditionalData additionalData )
-    {
-        if ( !forceEnabled || (collisionDetection && !additionalData.isTouching) )
-        {
-            // Don't compute forces if there are no collisions which prevents feeling drag/friction while moving through air. 
-            return Vector3.zero;
-        }
-        var force = additionalData.physicsCursorPosition - position;
-        force *= stiffness;
-        force -= velocity * damping;
-        return force;
-    }
-    
+
     #endregion
 
     // COLLISION DETECTION
@@ -247,15 +263,16 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     {
         // Add collider if not exists
         var col = gameObject.GetComponent<Collider>();
-        if ( !col )
+        if (!col)
         {
             col = gameObject.AddComponent<SphereCollider>();
         }
 
         // Neutral PhysicMaterial to interact with others 
-        if ( !col.material )
+        if (!col.material)
         {
-            col.material = new PhysicMaterial {dynamicFriction = 0, staticFriction = 0};
+            col.material = new PhysicMaterial { dynamicFriction = 0, staticFriction = 0 };
+
         }
 
         collisionDetection = true;
@@ -265,12 +282,12 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// Called when effector touch other game object
     /// </summary>
     /// <param name="collision">collision information</param>
-    private void OnCollisionEnter ( Collision collision )
+    private void OnCollisionEnter(Collision collision)
     {
-        if ( forceEnabled && collisionDetection && !touched.Contains( collision.collider ) )
+        if (forceEnabled && collisionDetection && !touched.Contains(collision.collider))
         {
             // store touched object
-            touched.Add( collision.collider );
+            touched.Add(collision.collider);
         }
     }
 
@@ -278,13 +295,13 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// Called when effector move away from another game object 
     /// </summary>
     /// <param name="collision">collision information</param>
-    private void OnCollisionExit ( Collision collision )
+    private void OnCollisionExit(Collision collision)
     {
-        if ( forceEnabled && collisionDetection && touched.Contains( collision.collider ) )
+        if (forceEnabled && collisionDetection && touched.Contains(collision.collider))
         {
-            touched.Remove( collision.collider );
+            touched.Remove(collision.collider);
         }
     }
-    
+
     #endregion
 }

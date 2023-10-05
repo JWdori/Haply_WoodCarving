@@ -24,8 +24,6 @@ namespace BzKovSoft.ObjectSlicer.EventHandlers
 		public bool OnSlice(IBzMeshSlicer meshSlicer, Plane plane, object sliceData)
 		{
 			Quaternion rotation = Quaternion.LookRotation(plane.normal);
-			UnityEngine.Debug.Log(plane.normal);
-
 			_lastPlaneTrs.Enqueue(Matrix4x4.TRS(plane.ClosestPointOnPlane(transform.position), rotation, Vector3.one));
 			if (_lastPlaneTrs.Count > 5)
 			{
@@ -35,7 +33,6 @@ namespace BzKovSoft.ObjectSlicer.EventHandlers
 			_stopwatch = Stopwatch.StartNew();
 			var filters = GetComponentsInChildren<MeshFilter>();
 			int vertexCount = 0;
-
 			for (int i = 0; i < filters.Length; i++)
 			{
 				vertexCount += filters[i].sharedMesh.vertexCount;

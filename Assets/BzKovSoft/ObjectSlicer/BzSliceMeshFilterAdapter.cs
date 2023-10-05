@@ -36,33 +36,11 @@ namespace BzKovSoft.ObjectSlicer
 			var meshFilter = meshRenderer.gameObject.GetComponent<MeshFilter>();
 			meshFilter.mesh = mesh;
 			meshRenderer.sharedMaterials = materials;
-
-			GenerateBoxColliderObject(meshRenderer.gameObject);
-
-
 		}
 
 		public Vector3 GetObjectCenterInWorldSpace()
 		{
 			return _l2w.MultiplyPoint3x4(Vector3.zero);
-		}
-		// Box Collider 생성 메서드 추가
-		private void GenerateBoxColliderObject(GameObject sourceObject)
-		{
-			GameObject boxObject = new GameObject(sourceObject.name + "_boxCollider");
-			boxObject.transform.SetParent(sourceObject.transform.parent);
-			boxObject.transform.position = sourceObject.transform.position;
-			boxObject.transform.rotation = sourceObject.transform.rotation;
-			boxObject.transform.localScale = sourceObject.transform.localScale;
-
-			var boxCollider = boxObject.AddComponent<BoxCollider>();
-			var meshFilter = sourceObject.GetComponent<MeshFilter>();
-
-			if (meshFilter != null)
-			{
-				boxCollider.center = meshFilter.mesh.bounds.center;
-				boxCollider.size = meshFilter.mesh.bounds.size;
-			}
 		}
 	}
 }

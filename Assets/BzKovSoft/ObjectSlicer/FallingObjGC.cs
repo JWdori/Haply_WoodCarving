@@ -14,7 +14,7 @@ namespace BzKovSoft.ObjectSlicer
 		[SerializeField]
 		int _delaySec = 10;
 		[SerializeField]
-		float _minPosY = 1f;
+		float _minPosY = -10f;
 #pragma warning restore 0649
 		float _nextTime = 0f;
 
@@ -24,6 +24,7 @@ namespace BzKovSoft.ObjectSlicer
 				return;
 
 			_nextTime = Time.time + _delaySec;
+
 			var objects = Resources.FindObjectsOfTypeAll(typeof(BzSliceableBase));
 
 			for (int i = 0; i < objects.Length; i++)

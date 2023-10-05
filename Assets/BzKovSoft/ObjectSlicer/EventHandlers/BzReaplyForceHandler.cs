@@ -23,9 +23,6 @@ namespace BzKovSoft.ObjectSlicer.EventHandlers
 				var slicer = resultObject.gameObject.GetComponent<IBzMeshSlicer>();
 				slicer.AddTask(task);
 			}
-
-			//Destroy(original, 2f);
-
 		}
 
 		public async Task ObjectSlicedAsync(GameObject original, BzSliceTryResult result)

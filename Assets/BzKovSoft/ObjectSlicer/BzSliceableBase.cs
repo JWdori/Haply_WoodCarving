@@ -547,6 +547,7 @@ namespace BzKovSoft.ObjectSlicer
 				result[i] = new BzSlicerTryResultObject
 				{
 					gameObject = newObject,
+					side = resultObject.side,
 					meshes = GetItemResult(resultObject),
 				};
 			}

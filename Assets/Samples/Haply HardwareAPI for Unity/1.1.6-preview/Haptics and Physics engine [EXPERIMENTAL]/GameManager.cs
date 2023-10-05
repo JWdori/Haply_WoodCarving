@@ -24,12 +24,12 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
         public Text physicsFrequencyText;
         public Text hapticsFrequencyText;
         public string chooseModeMessage = "Press 1 to Simple Mode, 2 to Advanced";
-        public string enableForceMessage= "Move the sphere at center not touching anything and hit SPACE to enable force";
+        public string enableForceMessage = "Move the sphere at center not touching anything and hit SPACE to enable force";
         public string collisionMessage = "Press C to enable/disable collision detection";
-        
+
         void Start()
         {
-            if ( !simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf )
+            if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
             {
                 helpText.text = chooseModeMessage;
             }
@@ -37,7 +37,7 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
             {
                 helpText.text = enableForceMessage;
             }
-            frequenciesPanel.SetActive( false );
+            frequenciesPanel.SetActive(false);
         }
 
         // Update is called once per frame
@@ -51,80 +51,92 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
                 hapticsFrequencyText.text = $"haptics : {hapticThread.actualFrequency}Hz";
             physicsFrequencyText.text = $"physics : {physicsFrequency}Hz";
 
-            if ( Input.GetKeyDown( KeyCode.Escape ) )
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
                 EditorApplication.ExitPlaymode();
-    #else
+#else
                 Application.Quit();
-    #endif
+#endif
             }
-            else if ( Input.GetKeyDown( KeyCode.Alpha1 ) )
+            else if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                if ( !simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf )
+                if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
                 {
-                    simpleEffector.gameObject.SetActive( true );
+                    simpleEffector.gameObject.SetActive(true);
                     helpText.text = enableForceMessage;
-                    frequenciesPanel.SetActive( true );
-                }
-            } 
-            else if (Input.GetKeyDown( KeyCode.Alpha2 ))
-            {
-                if ( !simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf )
-                {
-                    advancedEffector.gameObject.SetActive( true );
-                    helpText.text = enableForceMessage;
-                    frequenciesPanel.SetActive( true );
+                    frequenciesPanel.SetActive(true);
                 }
             }
-            else if ( Input.GetKeyDown( KeyCode.Space ) )
+            else if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
+                {
+                    advancedEffector.gameObject.SetActive(true);
+                    helpText.text = enableForceMessage;
+                    frequenciesPanel.SetActive(true);
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Space))
             {
                 ToggleForceFeedback();
             }
-            else if ( Input.GetKeyDown( KeyCode.C ) && advancedEffector.gameObject.activeSelf)
+            else if (Input.GetKeyDown(KeyCode.C) && advancedEffector.gameObject.activeSelf)
             {
                 advancedEffector.collisionDetection = !advancedEffector.collisionDetection;
             }
-            else if ( Input.GetKeyDown( KeyCode.UpArrow ) && frequenciesPanel.activeSelf && physicsFrequency < 10000)
+            else if (Input.GetKeyDown(KeyCode.UpArrow) && frequenciesPanel.activeSelf && physicsFrequency < 10000)
             {
                 physicsFrequency += 50;
             }
-            else if ( Input.GetKeyDown( KeyCode.DownArrow ) && frequenciesPanel.activeSelf && physicsFrequency > 200)
+            else if (Input.GetKeyDown(KeyCode.DownArrow) && frequenciesPanel.activeSelf && physicsFrequency > 200)
             {
                 physicsFrequency -= 100;
             }
-            else if ( Input.GetKeyDown( KeyCode.DownArrow ) && frequenciesPanel.activeSelf && physicsFrequency > 0)
+            else if (Input.GetKeyDown(KeyCode.DownArrow) && frequenciesPanel.activeSelf && physicsFrequency > 0)
             {
                 physicsFrequency /= 2;
             }
-            else if ( Input.GetKeyDown( KeyCode.RightArrow ) && frequenciesPanel.activeSelf && hapticThread.targetFrequency < 10000)
+            else if (Input.GetKeyDown(KeyCode.RightArrow) && frequenciesPanel.activeSelf && hapticThread.targetFrequency < 10000)
             {
                 hapticThread.targetFrequency += 50;
             }
-            else if ( Input.GetKeyDown( KeyCode.LeftArrow ) && frequenciesPanel.activeSelf && hapticThread.targetFrequency > 200)
+            else if (Input.GetKeyDown(KeyCode.LeftArrow) && frequenciesPanel.activeSelf && hapticThread.targetFrequency > 200)
             {
                 hapticThread.targetFrequency -= 100;
             }
-            else if ( Input.GetKeyDown( KeyCode.LeftArrow ) && frequenciesPanel.activeSelf && hapticThread.targetFrequency > 0)
+            else if (Input.GetKeyDown(KeyCode.LeftArrow) && frequenciesPanel.activeSelf && hapticThread.targetFrequency > 0)
             {
                 hapticThread.targetFrequency /= 2;
             }
         }
-        
+
         // Display collision infos
         // ----------------------------------
         private void OnGUI()
         {
             if (advancedEffector.gameObject.activeSelf && advancedEffector.touched.Count > 0)
             {
+                var touchedObject = advancedEffector.touched[0];
+
+                // Check if the touched object still exists
+                if (touchedObject == null)
+                {
+                    advancedEffector.touched.RemoveAt(0);
+                    return;
+                }
+
                 // display touched physic material infos on screen
-                var physicMaterial = advancedEffector.touched[0].GetComponent<Collider>().material;
-                var text = $"PhysicsMaterial: {physicMaterial.name.Replace( "(Instance)", "" )} \n" +
+                var physicMaterial = touchedObject.GetComponent<Collider>().material;
+
+                if (physicMaterial == null) return; // Check if physicMaterial exists
+
+                var text = $"PhysicsMaterial: {physicMaterial.name.Replace("(Instance)", "")} \n" +
                            $"dynamic friction: {physicMaterial.dynamicFriction}, static friction: {physicMaterial.staticFriction}\n";
-                
+
                 // display touched rigidbody infos on screen
-                var rb = advancedEffector.touched[0].GetComponent<Rigidbody>();
-                if ( rb )
+                var rb = touchedObject.GetComponent<Rigidbody>();
+                if (rb)
                 {
                     text += $"mass: {rb.mass}, drag: {rb.drag}, angular drag: {rb.angularDrag}\n";
                 }
@@ -133,26 +145,27 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
             }
         }
 
+
         public void ToggleForceFeedback()
         {
-            if ( simpleEffector.gameObject.activeSelf )
+            if (simpleEffector.gameObject.activeSelf)
             {
                 simpleEffector.forceEnabled = !simpleEffector.forceEnabled;
                 simpleEffector.gameObject.GetComponent<MeshRenderer>().enabled = simpleEffector.forceEnabled;
-                    
+
                 hapticThread.avatar.gameObject.GetComponent<MeshRenderer>().material =
                     simpleEffector.forceEnabled ? enabledForceMaterial : disabledForceMaterial;
-                    
+
                 helpText.text = simpleEffector.forceEnabled ? "" : enableForceMessage;
             }
-            else if ( advancedEffector.gameObject.activeSelf )
+            else if (advancedEffector.gameObject.activeSelf)
             {
                 advancedEffector.forceEnabled = !advancedEffector.forceEnabled;
                 advancedEffector.gameObject.GetComponent<MeshRenderer>().enabled = advancedEffector.forceEnabled;
-                    
+
                 hapticThread.avatar.gameObject.GetComponent<MeshRenderer>().material =
                     advancedEffector.forceEnabled ? enabledForceMaterial : disabledForceMaterial;
-                    
+
                 helpText.text = advancedEffector.forceEnabled ? collisionMessage : enableForceMessage;
             }
         }

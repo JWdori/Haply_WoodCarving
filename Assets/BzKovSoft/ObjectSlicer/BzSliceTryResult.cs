@@ -19,6 +19,7 @@ namespace BzKovSoft.ObjectSlicer
 	public class BzSlicerTryResultObject
 	{
 		public GameObject gameObject;
+		public bool side;
 		public BzMeshSliceResult[] meshes;
 	}
 

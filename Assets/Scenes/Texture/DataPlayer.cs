@@ -7,7 +7,7 @@ public class DataPlayer : MonoBehaviour
     [HideInInspector]
     public GameObject targetObject; // 위치를 가져올 대상 오브젝트의 참조
     //public HapticController hapticController;
-    public GroundForce hapticController;
+    public AdvancedPhysicsHapticEffector hapticController;
 
     [HideInInspector]
     public Vector3 position; // 인스펙터에서 수정 가능한 포지션 변수
