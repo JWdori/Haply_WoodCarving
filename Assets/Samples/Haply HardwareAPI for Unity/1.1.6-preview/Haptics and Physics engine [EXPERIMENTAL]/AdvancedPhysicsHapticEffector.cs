@@ -132,7 +132,8 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
             force = new Vector3(forceX, forceY, forceZ);
         }
         force += Gravitiy();
-        //Debug.Log(force);
+        //Debug.Log($"Calculated Force: {force.magnitude} Newtons");
+
         return force;
     }
 
@@ -265,7 +266,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         var col = gameObject.GetComponent<Collider>();
         if (!col)
         {
-            col = gameObject.AddComponent<SphereCollider>();
+            col = gameObject.AddComponent<MeshCollider>();
         }
 
         // Neutral PhysicMaterial to interact with others 
