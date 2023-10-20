@@ -51,6 +51,8 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         public Vector3 physicsCursorPosition;
         public bool isTouching;
     }
+    private bool isColliding = false;
+
     [Range(-2, 2)]
     public float forceX;
     [Range(-2, 2)]
@@ -132,9 +134,11 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
             force = new Vector3(forceX, forceY, forceZ);
         }
         force += Gravitiy();
-        //Debug.Log($"Calculated Force: {force.magnitude} Newtons");
-
-        return force;
+        if (isColliding)
+        {
+            Debug.Log($"Calculated Force: {force.magnitude} Newtons");
+        }
+            return force;
     }
 
     private void FixedUpdate() =>
@@ -289,6 +293,8 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         {
             // store touched object
             touched.Add(collision.collider);
+            isColliding = true;
+
         }
     }
 
@@ -301,6 +307,8 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         if (forceEnabled && collisionDetection && touched.Contains(collision.collider))
         {
             touched.Remove(collision.collider);
+            isColliding = false;
+
         }
     }
 
