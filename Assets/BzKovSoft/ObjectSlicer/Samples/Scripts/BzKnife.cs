@@ -79,6 +79,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnTriggerEnter(Collider other)
 		{
+
 			var slicer = other.GetComponentInParent<IBzMeshSlicer>();
 			if (slicer == null)
 			{

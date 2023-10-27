@@ -29,14 +29,9 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
 
         void Start()
         {
-            if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
-            {
-                helpText.text = chooseModeMessage;
-            }
-            else
-            {
+
                 helpText.text = enableForceMessage;
-            }
+            
             frequenciesPanel.SetActive(false);
         }
 
@@ -59,24 +54,7 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
                 Application.Quit();
 #endif
             }
-            else if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
-                {
-                    simpleEffector.gameObject.SetActive(true);
-                    helpText.text = enableForceMessage;
-                    frequenciesPanel.SetActive(true);
-                }
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                if (!simpleEffector.gameObject.activeSelf && !advancedEffector.gameObject.activeSelf)
-                {
-                    advancedEffector.gameObject.SetActive(true);
-                    helpText.text = enableForceMessage;
-                    frequenciesPanel.SetActive(true);
-                }
-            }
+
             else if (Input.GetKeyDown(KeyCode.Space))
             {
                 ToggleForceFeedback();
@@ -148,17 +126,7 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
 
         public void ToggleForceFeedback()
         {
-            if (simpleEffector.gameObject.activeSelf)
-            {
-                simpleEffector.forceEnabled = !simpleEffector.forceEnabled;
-                simpleEffector.gameObject.GetComponent<MeshRenderer>().enabled = simpleEffector.forceEnabled;
-
-                hapticThread.avatar.gameObject.GetComponent<MeshRenderer>().material =
-                    simpleEffector.forceEnabled ? enabledForceMaterial : disabledForceMaterial;
-
-                helpText.text = simpleEffector.forceEnabled ? "" : enableForceMessage;
-            }
-            else if (advancedEffector.gameObject.activeSelf)
+            if (advancedEffector.gameObject.activeSelf)
             {
                 advancedEffector.forceEnabled = !advancedEffector.forceEnabled;
                 advancedEffector.gameObject.GetComponent<MeshRenderer>().enabled = advancedEffector.forceEnabled;

@@ -8,16 +8,29 @@ public class EdgeDetector : MonoBehaviour
 
     private List<Vector3> edges = new List<Vector3>();
     private Vector3 _previousMeshSize = Vector3.zero; // 이전 프레임에서의 메쉬 크기 저장
+    private MainEdgeDetector mainEdgeDetector; // MainEdgeDetector 스크립트 참조 추가
+
+    public delegate void EdgeDetectedHandler(string objectName, List<Vector3> edges);
+    public event EdgeDetectedHandler OnEdgesDetected;
+
+    private string objectName; // 오브젝트의 이름 저장
 
     void Start()
     {
         mesh = GetComponent<MeshFilter>().mesh;
         if (mesh != null)
             _previousMeshSize = mesh.bounds.size;
-        DetectEdges();
-        Debug.Log("모서리의 개수: " + edges.Count / 2);
 
-    }
+        // MainEdgeDetector 게임 오브젝트를 찾아서 참조
+        mainEdgeDetector = GameObject.FindObjectOfType<MainEdgeDetector>();
+
+        // 오브젝트 이름을 설정
+        objectName = gameObject.name;
+
+        // 데이터를 MainEdgeDetector로 전달
+        RefreshEdges();
+     }
+
     void Update()
     {
 
@@ -25,8 +38,6 @@ public class EdgeDetector : MonoBehaviour
         // 메쉬가 할당되었고, 크기가 변했다면 RefreshEdges 호출
         if (mesh != null && _previousMeshSize != mesh.bounds.size)
         {
-            Debug.Log(";;" + _previousMeshSize + "sssss" + mesh.bounds.size);
-
             RefreshEdges();
             _previousMeshSize = mesh.bounds.size; // 이전 크기 업데이트
         }
@@ -81,6 +92,7 @@ public class EdgeDetector : MonoBehaviour
                 edges.Add(vertexB);
                 //Debug.Log($"모서리 위치: {vertexA} - {vertexB}, 외부 모서리");
             }
+
         }
     }
 
@@ -101,7 +113,7 @@ public class EdgeDetector : MonoBehaviour
     void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
-        float boxSize = 0.1f;
+        float boxSize = 0.005f;
 
         for (int i = 0; i < edges.Count; i += 2)
         {
@@ -127,7 +139,14 @@ public class EdgeDetector : MonoBehaviour
     {
         edges.Clear();  // 현재 감지된 모서리 목록을 초기화
         DetectEdges();  // 모서리 다시 감지
+        mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges);
+        Debug.Log(gameObject.name + " : " + edges.Count);
+
     }
 
-
+    public List<Vector3> GetEdgePositions()
+    {
+        return edges;
+    }
 }
+

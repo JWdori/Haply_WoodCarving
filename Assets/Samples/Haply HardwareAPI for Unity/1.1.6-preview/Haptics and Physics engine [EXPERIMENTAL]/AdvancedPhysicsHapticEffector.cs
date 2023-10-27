@@ -70,7 +70,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     public float damping = 1;
 
     private HapticThread m_hapticThread;
-
+    public GameObject EndPoint;
     // PHYSICS
     [Header("Physics")]
     [Tooltip("Use it to enable friction and mass force feeling")]
@@ -102,7 +102,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         m_hapticThread = FindObjectOfType<HapticThread>();
 
         // create the physics link between physic effector and device cursor
-        AttachCursor(m_hapticThread.avatar.gameObject);
+        AttachCursor(m_hapticThread.avatar.gameObject, EndPoint);
         SetupCollisionDetection();
     }
 
@@ -138,7 +138,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         {
             Debug.Log($"Calculated Force: {force.magnitude} Newtons");
         }
-            return force;
+        return force;
     }
 
     private void FixedUpdate() =>
@@ -162,7 +162,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// Attach the current physics effector to device end-effector with a joint
     /// </summary>
     /// <param name="cursor">Cursor to attach with</param>
-    private void AttachCursor(GameObject cursor)
+    private void AttachCursor(GameObject cursor, GameObject cursor2)
     {
         // Add kinematic rigidbody to cursor
         var rbCursor = cursor.GetComponent<Rigidbody>();
@@ -270,7 +270,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
         var col = gameObject.GetComponent<Collider>();
         if (!col)
         {
-            col = gameObject.AddComponent<MeshCollider>();
+            col = gameObject.AddComponent<BoxCollider>();
         }
 
         // Neutral PhysicMaterial to interact with others 
