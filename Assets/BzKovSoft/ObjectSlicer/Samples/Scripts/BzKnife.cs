@@ -1,4 +1,9 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+
+
 
 namespace BzKovSoft.ObjectSlicer.Samples
 {
@@ -15,11 +20,33 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		[SerializeField]
 		private Vector3 _direction = Vector3.up;
+		private GameObject other2;
 
 		private void Update()
 		{
 			_prevPos = _pos;
 			_pos = transform.position;
+
+			if (other2 != null)
+			{
+				EdgeDetector edgeDetector = other2.GetComponentInParent<EdgeDetector>();
+				if (edgeDetector != null)
+				{
+					List<Vector3> edges = edgeDetector.GetEdgePositions();
+					// 모서리 그리기
+					for (int i = 0; i < edges.Count; i += 2)
+					{
+						Vector3 edgeStart = other2.transform.TransformPoint(edges[i]);
+						Vector3 edgeEnd = other2.transform.TransformPoint(edges[i + 1]);
+
+						// 라인 그리기
+						Debug.DrawLine(edgeStart, edgeEnd, Color.blue);
+
+						// 모서리 정보 출력
+						Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
+					}
+				}
+			}
 		}
 
 		/// <summary>
@@ -79,18 +106,52 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnTriggerEnter(Collider other)
 		{
-
 			var slicer = other.GetComponentInParent<IBzMeshSlicer>();
 			if (slicer == null)
 			{
 				return;
 			}
+			GameObject otherGameObject = other.gameObject;
+			other2 = otherGameObject;
+			EdgeDetector edgeDetector = other.GetComponentInParent<EdgeDetector>();
+			// EdgeDetector가 있고 모서리 데이터가 있는지 확인
+			if (edgeDetector != null)
+			{
+				List<Vector3> edges = edgeDetector.GetEdgePositions();
+				// 모서리 그리기
+				for (int i = 0; i < edges.Count; i += 2)
+				{
+					Vector3 edgeStart = other.transform.TransformPoint(edges[i]);
+					Vector3 edgeEnd = other.transform.TransformPoint(edges[i + 1]);
 
-			Vector3 point = GetCollisionPoint();
-			Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
-			Plane plane = new Plane(normal, point);
+					// 라인 그리기
+					Debug.DrawLine(edgeStart, edgeEnd, Color.blue);
 
-			await slicer.SliceAsync(plane);
+					// 모서리 정보 출력
+					Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
+				}
+
+
+				// 현재 충돌한 오브젝트의 위치를 가져옵니다.
+				Vector3 collisionPoint = GetCollisionPoint();
+
+				// 충돌한 위치와 모서리 위치 간의 거리를 계산하여 모서리 데이터와 관련 있는지 확인
+				float thresholdDistance = 1f; // 모서리와 충돌한 위치 간의 임계값 설정
+				foreach (Vector3 edgePosition in edges)
+				{
+					float distance = Vector3.Distance(collisionPoint, edgePosition);
+					//Debug.Log(distance);
+					if (distance < thresholdDistance)
+					{
+						Vector3 point = GetCollisionPoint();
+						Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
+						Plane plane = new Plane(normal, point);
+						await slicer.SliceAsync(plane);
+					}
+
+				}
+			}
+
 		}
 
 		private Vector3 GetCollisionPoint()

@@ -6,7 +6,7 @@ public class EdgeDetector : MonoBehaviour
 {
     private Mesh mesh;
 
-    public List<Vector3> edges = new List<Vector3>();
+    private List<Vector3> edges = new List<Vector3>();
     private Vector3 _previousMeshSize = Vector3.zero; // 이전 프레임에서의 메쉬 크기 저장
     private MainEdgeDetector mainEdgeDetector; // MainEdgeDetector 스크립트 참조 추가
 
@@ -41,6 +41,7 @@ public class EdgeDetector : MonoBehaviour
             RefreshEdges();
             _previousMeshSize = mesh.bounds.size; // 이전 크기 업데이트
         }
+
     }
     void DetectEdges()
     {
@@ -94,7 +95,6 @@ public class EdgeDetector : MonoBehaviour
             }
 
         }
-
     }
 
 
@@ -111,47 +111,42 @@ public class EdgeDetector : MonoBehaviour
 
         return count == 2;
     }
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.blue;
-        float boxSize = 0.005f;
+    //void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.blue;
+    //    float boxSize = 0.005f;
 
-        for (int i = 0; i < edges.Count; i += 2)
-        {
-            Vector3 edgeStart = transform.TransformPoint(edges[i]);
-            Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
-            Vector3 edgeCenter = (edgeStart + edgeEnd) / 2;
-            Vector3 edgeDirection = (edgeEnd - edgeStart).normalized;
-            float edgeLength = Vector3.Distance(edgeStart, edgeEnd);
+    //    for (int i = 0; i < edges.Count; i += 2)
+    //    {
+    //        Vector3 edgeStart = transform.TransformPoint(edges[i]);
+    //        Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
+    //        Vector3 edgeCenter = (edgeStart + edgeEnd) / 2;
+    //        Vector3 edgeDirection = (edgeEnd - edgeStart).normalized;
+    //        float edgeLength = Vector3.Distance(edgeStart, edgeEnd);
 
-            // 박스의 크기를 설정합니다.
-            Vector3 boxDimensions = new Vector3(boxSize, boxSize, edgeLength);
+    //        // 박스의 크기를 설정합니다.
+    //        Vector3 boxDimensions = new Vector3(boxSize, boxSize, edgeLength);
 
-            // 박스의 방향을 모서리의 방향으로 설정하기 위해 회전 값을 계산합니다.
-            Quaternion boxRotation = Quaternion.LookRotation(edgeDirection, Vector3.up);
+    //        // 박스의 방향을 모서리의 방향으로 설정하기 위해 회전 값을 계산합니다.
+    //        Quaternion boxRotation = Quaternion.LookRotation(edgeDirection, Vector3.up);
 
-            // 박스를 그립니다.
-            Gizmos.matrix = Matrix4x4.TRS(edgeCenter, boxRotation, boxDimensions);
-            Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-            Gizmos.matrix = Matrix4x4.identity;  // Gizmos의 변환 행렬을 기본값으로 복원합니다.
-        }
-    }
-
+    //        // 박스를 그립니다.
+    //        Gizmos.matrix = Matrix4x4.TRS(edgeCenter, boxRotation, boxDimensions);
+    //        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+    //        Gizmos.matrix = Matrix4x4.identity;  // Gizmos의 변환 행렬을 기본값으로 복원합니다.
+    //    }
+    //}
     public void RefreshEdges()
     {
-        Debug.Log(11);
-
         edges.Clear();  // 현재 감지된 모서리 목록을 초기화
         DetectEdges();  // 모서리 다시 감지
-        //mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges);
+        mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges);
         Debug.Log(gameObject.name + " : " + edges.Count);
-        for (int i = 0; i < edges.Count; i += 2)
-        {
-           Vector3 edgeStart = edges[i];
-            Vector3 edgeEnd = edges[i + 1];
-            Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
-        }
+
+
     }
+
+
 
     public List<Vector3> GetEdgePositions()
     {

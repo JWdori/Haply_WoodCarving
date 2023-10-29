@@ -13,7 +13,7 @@ public class MainEdgeDetector : MonoBehaviour
     // 이벤트 핸들러 함수
     public void OnEdgesDetectedHandler(string objectName, List<Vector3> edges)
     {
-        Debug.Log(objectName);
+        //Debug.Log(objectName);
 
         // 딕셔너리에 오브젝트 이름과 해당하는 좌표값 리스트를 저장
         if (objectEdgesData.ContainsKey(objectName))
@@ -55,6 +55,4 @@ public class MainEdgeDetector : MonoBehaviour
             }
         }
     }
-
-
 }

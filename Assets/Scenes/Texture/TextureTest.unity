@@ -8077,7 +8077,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 275062cbfee351542a5ad015f315f9c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  edgeDetectors: []
 --- !u!1 &1019522741
 GameObject:
   m_ObjectHideFlags: 0
@@ -9752,6 +9751,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _origin: {x: 0, y: 0, z: 0}
   _direction: {x: 1, y: 0, z: 0}
+  mainEdgeDetector: {fileID: 0}
 --- !u!1 &1519728609
 GameObject:
   m_ObjectHideFlags: 0
@@ -12140,6 +12140,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _origin: {x: 0, y: 0, z: 0}
   _direction: {x: 0, y: 0, z: 1}
+  mainEdgeDetector: {fileID: 1019374257}
 --- !u!33 &8837866984994754109
 MeshFilter:
   m_ObjectHideFlags: 0
