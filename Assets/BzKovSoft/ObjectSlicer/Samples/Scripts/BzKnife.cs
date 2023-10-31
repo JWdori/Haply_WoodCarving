@@ -26,7 +26,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		{
 			_prevPos = _pos;
 			_pos = transform.position;
-
+			//지울 부분
 			if (other2 != null)
 			{
 				EdgeDetector edgeDetector = other2.GetComponentInParent<EdgeDetector>();
@@ -42,11 +42,10 @@ namespace BzKovSoft.ObjectSlicer.Samples
 						// 라인 그리기
 						Debug.DrawLine(edgeStart, edgeEnd, Color.blue);
 
-						// 모서리 정보 출력
-						Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
 					}
 				}
 			}
+			//지울 부분
 		}
 
 		/// <summary>
@@ -113,7 +112,13 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			}
 			GameObject otherGameObject = other.gameObject;
 			other2 = otherGameObject;
+
+			Vector3 point = GetCollisionPoint();
+			Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
+			Plane plane = new Plane(normal, point);
 			EdgeDetector edgeDetector = other.GetComponentInParent<EdgeDetector>();
+			Debug.Log(point);
+			float distance = 0.001f;
 			// EdgeDetector가 있고 모서리 데이터가 있는지 확인
 			if (edgeDetector != null)
 			{
@@ -123,37 +128,24 @@ namespace BzKovSoft.ObjectSlicer.Samples
 				{
 					Vector3 edgeStart = other.transform.TransformPoint(edges[i]);
 					Vector3 edgeEnd = other.transform.TransformPoint(edges[i + 1]);
-
-					// 라인 그리기
 					Debug.DrawLine(edgeStart, edgeEnd, Color.blue);
-
-					// 모서리 정보 출력
-					Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
-				}
-
-
-				// 현재 충돌한 오브젝트의 위치를 가져옵니다.
-				Vector3 collisionPoint = GetCollisionPoint();
-
-				// 충돌한 위치와 모서리 위치 간의 거리를 계산하여 모서리 데이터와 관련 있는지 확인
-				float thresholdDistance = 1f; // 모서리와 충돌한 위치 간의 임계값 설정
-				foreach (Vector3 edgePosition in edges)
-				{
-					float distance = Vector3.Distance(collisionPoint, edgePosition);
-					//Debug.Log(distance);
-					if (distance < thresholdDistance)
+					if (IsPointOnEdge(edgeStart, edgeEnd, point, distance))
 					{
-						Vector3 point = GetCollisionPoint();
-						Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
-						Plane plane = new Plane(normal, point);
+						// knife와 선분이 접촉했다면 이곳에서 원하는 작업을 수행
 						await slicer.SliceAsync(plane);
 					}
 
+
+					// 라인 그리기
+					// 모서리 정보 출력
+					//Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
+
 				}
+				//		await slicer.SliceAsync(plane);
+
 			}
 
 		}
-
 		private Vector3 GetCollisionPoint()
 		{
 			Vector3 distToObject = transform.position - Origin;
@@ -161,6 +153,20 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 			Vector3 collisionPoint = Origin + proj;
 			return collisionPoint;
+		}
+
+		bool IsPointOnEdge(Vector3 edgeStart, Vector3 edgeEnd, Vector3 point, float error)
+		{
+			// 모서리의 길이
+			float edgeLength = Vector3.Distance(edgeStart, edgeEnd);
+			// 모서리 시작점과 점 사이의 거리
+			float distanceFromStart = Vector3.Distance(edgeStart, point);
+			// 모서리 끝점과 점 사이의 거리
+			float distanceFromEnd = Vector3.Distance(edgeEnd, point);
+			// 점이 모서리 위에 있으면 true 반환
+			// (두 거리의 합이 모서리 길이와 거의 같을 때로 판단)
+			Debug.Log(Mathf.Abs(distanceFromStart + distanceFromEnd - edgeLength));
+			return Mathf.Abs(distanceFromStart + distanceFromEnd - edgeLength) < error;
 		}
 	}
 }
