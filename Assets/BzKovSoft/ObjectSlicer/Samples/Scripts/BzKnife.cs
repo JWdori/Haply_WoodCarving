@@ -14,6 +14,8 @@ namespace BzKovSoft.ObjectSlicer.Samples
 	{
 		Vector3 _prevPos;
 		Vector3 _pos;
+		public GameObject angleObject; // 각도를 구할 오브젝트
+		public float rotationSpeed = 360f;
 
 		[SerializeField]
 		private Vector3 _origin = Vector3.down;
@@ -22,8 +24,32 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		private Vector3 _direction = Vector3.up;
 		private GameObject other2;
 
+		ParticleSystem ps;
+		List<ParticleSystem.Particle> inside = new List<ParticleSystem.Particle>();
+
 		private void Update()
 		{
+			if (angleObject != null) {
+				//RotateObject(Vector3.right);
+				//이게 회전
+				//Debug.Log(Mathf.RoundToInt(angleObject.transform.rotation.eulerAngles.z));
+				if (Input.GetKeyDown(KeyCode.Z))
+				{
+					RotateObject(Vector3.right);
+					Debug.Log(Mathf.RoundToInt(angleObject.transform.localEulerAngles.z));
+				}
+				// 키보드 2를 누를 때 y 축으로 무한 회전
+				else if (Input.GetKeyDown(KeyCode.X))
+				{
+					RotateObject(Vector3.up);
+				}
+				// 키보드 3을 누를 때 z 축으로 무한 회전
+				else if (Input.GetKeyDown(KeyCode.V))
+				{
+					RotateObject(Vector3.forward);
+				}
+
+			}
 			_prevPos = _pos;
 			_pos = transform.position;
 			//지울 부분
@@ -47,6 +73,16 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			}
 			//지울 부분
 		}
+
+
+		// 주어진 축을 기준으로 오브젝트를 회전하는 함수
+		private void RotateObject(Vector3 axis)
+		{
+			float rotationSpeed = 1000.0f;
+			angleObject.transform.Rotate(axis * rotationSpeed * Time.deltaTime);
+		}
+
+
 
 		/// <summary>
 		/// Origin of the knife
@@ -110,14 +146,16 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			{
 				return;
 			}
+		
 			GameObject otherGameObject = other.gameObject;
+			//
 			other2 = otherGameObject;
-
+			//
 			Vector3 point = GetCollisionPoint();
 			Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
 			Plane plane = new Plane(normal, point);
 			EdgeDetector edgeDetector = other.GetComponentInParent<EdgeDetector>();
-			Debug.Log(point);
+			//Debug.Log(point);
 			float distance = 0.001f;
 			// EdgeDetector가 있고 모서리 데이터가 있는지 확인
 			if (edgeDetector != null)
@@ -126,16 +164,16 @@ namespace BzKovSoft.ObjectSlicer.Samples
 				// 모서리 그리기
 				for (int i = 0; i < edges.Count; i += 2)
 				{
-					Vector3 edgeStart = other.transform.TransformPoint(edges[i]);
-					Vector3 edgeEnd = other.transform.TransformPoint(edges[i + 1]);
-					Debug.DrawLine(edgeStart, edgeEnd, Color.blue);
+					Vector3 edgeStart = otherGameObject.transform.TransformPoint(edges[i]);
+					Vector3 edgeEnd = otherGameObject.transform.TransformPoint(edges[i + 1]);
+					//CalculateContactAngle(angleObject, otherGameObject);
+
 					if (IsPointOnEdge(edgeStart, edgeEnd, point, distance))
 					{
+
 						// knife와 선분이 접촉했다면 이곳에서 원하는 작업을 수행
 						await slicer.SliceAsync(plane);
 					}
-
-
 					// 라인 그리기
 					// 모서리 정보 출력
 					//Debug.Log($"Edge {i / 2 + 1}: Start {edgeStart}, End {edgeEnd}");
@@ -165,8 +203,44 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			float distanceFromEnd = Vector3.Distance(edgeEnd, point);
 			// 점이 모서리 위에 있으면 true 반환
 			// (두 거리의 합이 모서리 길이와 거의 같을 때로 판단)
-			Debug.Log(Mathf.Abs(distanceFromStart + distanceFromEnd - edgeLength));
 			return Mathf.Abs(distanceFromStart + distanceFromEnd - edgeLength) < error;
 		}
+		private void CalculateContactAngle(GameObject objectA, GameObject objectB)
+		{
+			if (objectA == null || objectB == null)
+			{
+				return;
+			}
+			// objectA와 objectB의 상대적인 회전 각도를 계산
+			Quaternion relativeRotation = objectA.transform.rotation * Quaternion.Inverse(objectB.transform.rotation);
+
+			// 상대적인 각도를 Euler 각도로 변환하여 Z 축 값을 추출하고 정수로 반올림
+			int relativeRotationZ = Mathf.RoundToInt(relativeRotation.eulerAngles.x);
+		}
+
+
+
+		private void Awake()
+		{
+			ps = GameObject.Find("PWood").GetComponent<ParticleSystem>();
+		}
+
+		private void OnParticleTrigger()
+		{
+			Debug.Log("Cube Trigger");
+			ps.GetTriggerParticles(ParticleSystemTriggerEventType.Inside, inside);
+
+			foreach (var v in inside)
+			{
+				Debug.Log("CWube Trigger2");
+			}
+		}
+
+		private void OnParticleCollision(GameObject other)
+		{
+			Debug.Log($"Cube Collision : {other.name}");
+		}
+
+
 	}
 }
