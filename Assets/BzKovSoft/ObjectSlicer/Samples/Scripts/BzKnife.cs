@@ -29,27 +29,6 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		private void Update()
 		{
-			if (angleObject != null) {
-				//RotateObject(Vector3.right);
-				//이게 회전
-				//Debug.Log(Mathf.RoundToInt(angleObject.transform.rotation.eulerAngles.z));
-				if (Input.GetKeyDown(KeyCode.Z))
-				{
-					RotateObject(Vector3.right);
-					Debug.Log(Mathf.RoundToInt(angleObject.transform.localEulerAngles.z));
-				}
-				// 키보드 2를 누를 때 y 축으로 무한 회전
-				else if (Input.GetKeyDown(KeyCode.X))
-				{
-					RotateObject(Vector3.up);
-				}
-				// 키보드 3을 누를 때 z 축으로 무한 회전
-				else if (Input.GetKeyDown(KeyCode.V))
-				{
-					RotateObject(Vector3.forward);
-				}
-
-			}
 			_prevPos = _pos;
 			_pos = transform.position;
 			//지울 부분
@@ -71,19 +50,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 					}
 				}
 			}
-			//지울 부분
 		}
-
-
-		// 주어진 축을 기준으로 오브젝트를 회전하는 함수
-		private void RotateObject(Vector3 axis)
-		{
-			float rotationSpeed = 1000.0f;
-			angleObject.transform.Rotate(axis * rotationSpeed * Time.deltaTime);
-		}
-
-
-
 		/// <summary>
 		/// Origin of the knife
 		/// </summary>
@@ -141,6 +108,12 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnTriggerEnter(Collider other)
 		{
+			if (angleObject != null)
+			{
+				Debug.Log("Object X position: " + angleObject.transform.eulerAngles.x 
+					+ "  Object Y position: " + angleObject.transform.eulerAngles.y  +"  Object Z position: " + angleObject.transform.eulerAngles.z);
+
+			}
 			var slicer = other.GetComponentInParent<IBzMeshSlicer>();
 			if (slicer == null)
 			{
@@ -219,27 +192,27 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		}
 
 
+		////이제 필요 없음
+		//private void Awake()
+		//{
+		//	ps = GameObject.Find("PWood").GetComponent<ParticleSystem>();
+		//}
 
-		private void Awake()
-		{
-			ps = GameObject.Find("PWood").GetComponent<ParticleSystem>();
-		}
+		//private void OnParticleTrigger()
+		//{
+		//	Debug.Log("Cube Trigger");
+		//	ps.GetTriggerParticles(ParticleSystemTriggerEventType.Inside, inside);
+			
+		//	foreach (var v in inside)
+		//	{
+		//		Debug.Log("CWube Trigger2");
+		//	}
+		//}
 
-		private void OnParticleTrigger()
-		{
-			Debug.Log("Cube Trigger");
-			ps.GetTriggerParticles(ParticleSystemTriggerEventType.Inside, inside);
-
-			foreach (var v in inside)
-			{
-				Debug.Log("CWube Trigger2");
-			}
-		}
-
-		private void OnParticleCollision(GameObject other)
-		{
-			Debug.Log($"Cube Collision : {other.name}");
-		}
+		//private void OnParticleCollision(GameObject other)
+		//{
+		//	Debug.Log($"Cube Collision : {other.name}");
+		//}
 
 
 	}

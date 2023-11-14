@@ -116,7 +116,7 @@ public class EdgeDetector : MonoBehaviour
         vertices.Clear(); // 꼭짓점 정보 초기화
         DetectEdges();
         mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges); // 수정: 꼭짓점 정보 추가
-        //Debug.Log(gameObject.name + " : " + edges.Count);
+        Debug.Log(gameObject.name + " : " + edges.Count);
     }
 
     public List<Vector3> GetEdgePositions()
