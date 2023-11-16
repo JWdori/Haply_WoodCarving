@@ -2,9 +2,9 @@
 #pragma kernel CSMainVel
 #pragma target 4.0
 
-#define thread_group_size_x 4
-#define thread_group_size_y 4
-#define thread_group_size_z 4
+#define thread_group_size_x 2
+#define thread_group_size_y 2
+#define thread_group_size_z 2
 
 
 //================================================================================================
@@ -120,9 +120,9 @@ void CSMainVel(uint3 id : SV_DispatchThreadID)
      */
 
 	//number of points per side, per thread.
-    const int gX = 15;
-    const int gY = 7;
-    const int gZ = 3;
+    const int gX = 20;
+    const int gY = 20;
+    const int gZ = 4;
 
     //grid side resolution
     const int sX = gX * thread_group_size_x;
@@ -213,9 +213,9 @@ void CSMainVel(uint3 id : SV_DispatchThreadID)
 void CSMainPos(uint3 id : SV_DispatchThreadID)
 {
 	//number of points per side, per thread.
-    const int gX = 15;
-    const int gY = 7;
-    const int gZ = 3;
+    const int gX = 20;
+    const int gY = 20;
+    const int gZ = 4;
 
     //index y, x, in order to convert to unity space
     //const int idx = id.x + id.y * thread_group_size_x * gX;
@@ -229,7 +229,8 @@ void CSMainPos(uint3 id : SV_DispatchThreadID)
     // 현재 위치와 초기 위치 비교
     float3 originalPos = originalPosBuffer[idx]; // 초기 위치
     float3 currentPos = posBuffer[idx].pos; // 현재 위치
-
+    if ((id.x == 39 && id.y == 39 && id.z ==15 ))
+        posBuffer[idx].pos = float3(0, 0, 0);
     // 거리 계산
     float distance = length(currentPos - originalPos);
 

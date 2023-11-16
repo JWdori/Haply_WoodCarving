@@ -87,7 +87,7 @@ public class MassSpringSystem : MonoBehaviour
     /** The lenght of the springs in the grid. This defines how far
      *  each mass unit is at a resting state.
      */
-    [Range(0.1f, 10.0f)] public float SpringLength = 1.0f;
+    [Range(0.01f, 10.0f)] public float SpringLength = 1.0f;
 
     /** The controller of the game object spawner object.
      */
@@ -101,6 +101,8 @@ public class MassSpringSystem : MonoBehaviour
      *  input events on the grid.
      */
     [Range(0.0f, 1000.0f)] public float MaxTouchForce = 100.0f;
+    [Range(0.0f, 1000.0f)] public float CollisionForce = 100.0f; // 충돌 시 적용할 힘의 크기
+
 
     /** Various ComputeBuffer variables are used to read and write data to and from the compute 
      *  shader (MassSpringComputeShader). 
@@ -168,6 +170,8 @@ public class MassSpringSystem : MonoBehaviour
     {
         HandleTouches();
         Dispatch();
+
+
         UpdatePrimitivePositions();
     }
 
@@ -462,10 +466,11 @@ public class MassSpringSystem : MonoBehaviour
      */
     public void ApplyPressureToMass(int index, float pressure, ref Vector3[] extForces)
     {
+        //Debug.Log(index +"   "+ pressure+ "  "+extForces);
         if (IndexExists(index))
         {
             Vector3 f = extForces[index];
-            extForces[index] = new Vector3(0.0f, 0.0f, MaxTouchForce * pressure * -1.0f);
+            extForces[index] = new Vector3(0.0f, 0.0f, MaxTouchForce * 1 * -1.0f);
         }
     }
 
@@ -490,12 +495,18 @@ public class MassSpringSystem : MonoBehaviour
         int zPosition = (int)(((y + (WorldGridSideLengthY / 2.0f)) / WorldGridSideLengthY) * GridResY);
 
         int index = xPosition + zPosition * GridResX;
+        Debug.Log(index);
         if (index < 0 || index > VertCount)
             Debug.Log("Warning: Touch or mouse input generated out of bounds grid index.");
+        //Debug.Log($"터치된 월드 좌표: ({x}, {y}), 그리드 좌표: ({xPosition}, {zPosition})");
+        // 힘의 크기를 계산하고 로그로 출력
+        float appliedForce = MaxTouchForce * pressure * -1.0f;
+        //Debug.Log(pressure);
 
         ApplyPressureToMass(index, pressure, ref extForces);
-        ApplyPressureToNeighbours(index, pressure, ref extForces);
+        //ApplyPressureToNeighbours(index, pressure, ref extForces); TMV
     }
+
 
     /** Called continuously by the update function to transform input data to grid forces.
      */
@@ -547,6 +558,7 @@ public class MassSpringSystem : MonoBehaviour
         Vector3[] positions = new Vector3[VertCount];
         positionBuffer.GetData(positions);
 
+
         if (Spawner != null)
             Spawner.UpdatePositions(positions);
     }
@@ -554,7 +566,6 @@ public class MassSpringSystem : MonoBehaviour
     void Dispatch()
     {
         SetGridPropertiesAndTime();
-
         SetVelocityBuffers();
         MassSpringComputeShader.Dispatch(VelKernel, gridUnitSideX, gridUnitSideY, gridUnitSideZ);
 
@@ -614,6 +625,74 @@ public class MassSpringSystem : MonoBehaviour
 
         velocityBuffer.SetData(velocities);
     }
+
+    public int ConvertGridPointToIndex(Vector3 gridPoint)
+    {
+        // 그리드 좌표를 인덱스로 변환
+        int xIndex = Mathf.FloorToInt(gridPoint.x);
+        int yIndex = Mathf.FloorToInt(gridPoint.y);
+        int zIndex = Mathf.FloorToInt(gridPoint.z);
+        // 3차원 그리드의 인덱스 계산
+        int index = xIndex + yIndex * GridResX + zIndex * GridResX * GridResY;
+        // 유효한 인덱스인지 확인
+        if (index >= 0 && index < VertCount)
+            return 421;
+        else
+            return -1; // 유효하지 않은 인덱스
+    }
+
+
+    public void ApplyForceToGrid(Vector3 gridPoint, float force)
+    {
+
+        int index = ConvertGridPointToIndex(gridPoint);
+        //Debug.Log(index);
+        if (index >= 0 && index < VertCount)
+        {
+            Vector3[] extForces = new Vector3[VertCount];
+            for (int i = 0; i < VertCount; i++)
+                extForces[i] = new Vector3(0.0f, 0.0f, 0.0f);
+            //Debug.Log(1111111111111111);
+            ApplyPressureToMass(index, 1, ref extForces); // 힘을 MaxTouchForce로 나누어 표준화
+                                                          //ApplyPressureToNeighbours(index, force / MaxTouchForce, ref extForces); // 이웃에도 동일하게 적용
+            externalForcesBuffer.SetData(extForces);
+            //Debug.Log(extForces);
+        }
+
+
+    }
+    public Vector3 ConvertWorldToGrid(Vector3 worldPoint)
+    {
+        // 월드 좌표를 그리드 좌표로 변환
+        float x = ((worldPoint.x + GetWorldGridSideLengthX() / 2.0f) / GetWorldGridSideLengthX()) * GridResX;
+        float y = ((worldPoint.y + GetWorldGridSideLengthY() / 2.0f) / GetWorldGridSideLengthY()) * GridResY;
+        float z = ((worldPoint.z + GetWorldGridSideLengthZ() / 2.0f) / GetWorldGridSideLengthZ()) * GridResZ;
+        // 그리드 좌표 반환
+        return new Vector3(Mathf.FloorToInt(x), Mathf.FloorToInt(y), Mathf.FloorToInt(z));
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

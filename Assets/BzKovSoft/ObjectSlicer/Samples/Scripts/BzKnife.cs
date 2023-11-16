@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
 
 
 
@@ -10,6 +11,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 	/// <summary>
 	/// The script must be attached to a GameObject that have collider marked as a "IsTrigger".
 	/// </summary>
+    /// 
 	public class BzKnife : MonoBehaviour
 	{
 		Vector3 _prevPos;
@@ -23,10 +25,23 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		[SerializeField]
 		private Vector3 _direction = Vector3.up;
 		private GameObject other2;
-
 		ParticleSystem ps;
 		List<ParticleSystem.Particle> inside = new List<ParticleSystem.Particle>();
+		[SerializeField]
+		public CommonData commonData;
+		float force;
+		private Vector3 previousVelocity = Vector3.zero;
+		private Vector3 currentAcceleration = Vector3.zero;
+		private void FixedUpdate()
+        {
 
+			Vector3 currentVelocity = commonData.GetDataVelo();
+			currentAcceleration = (currentVelocity - previousVelocity) / Time.fixedDeltaTime;
+
+
+			// 현재 속도를 저장
+			previousVelocity = currentVelocity;
+		}
 		private void Update()
 		{
 			_prevPos = _pos;
@@ -50,7 +65,12 @@ namespace BzKovSoft.ObjectSlicer.Samples
 					}
 				}
 			}
+			if (commonData != null)
+			{
+				force = commonData.GetData();
+			}
 		}
+
 		/// <summary>
 		/// Origin of the knife
 		/// </summary>
@@ -106,31 +126,38 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			Gizmos.DrawLine(center + up, center + down);
 		}
 
-		async void OnTriggerEnter(Collider other)
+		async void OnCollisionEnter(Collision collision)
 		{
 			if (angleObject != null)
 			{
-				Debug.Log("Object X position: " + angleObject.transform.eulerAngles.x 
-					+ "  Object Y position: " + angleObject.transform.eulerAngles.y  +"  Object Z position: " + angleObject.transform.eulerAngles.z);
+				//Debug.Log("Object X position: " + angleObject.transform.eulerAngles.x  + "  Object Y position: " + angleObject.transform.eulerAngles.y  +"  Object Z position: " + angleObject.transform.eulerAngles.z);
 
 			}
-			var slicer = other.GetComponentInParent<IBzMeshSlicer>();
+			var slicer = collision.gameObject.GetComponentInParent<IBzMeshSlicer>();
 			if (slicer == null)
 			{
 				return;
 			}
-		
-			GameObject otherGameObject = other.gameObject;
+
+			GameObject otherGameObject = collision.gameObject;
 			//
 			other2 = otherGameObject;
 			//
+
+			var rb = collision.gameObject.GetComponent<Rigidbody>();
+			float mass2 = rb.mass;
+			float f = mass2 * currentAcceleration.magnitude;
+			Debug.Log(f);
+
 			Vector3 point = GetCollisionPoint();
 			Vector3 normal = Vector3.Cross(MoveDirection, BladeDirection);
 			Plane plane = new Plane(normal, point);
-			EdgeDetector edgeDetector = other.GetComponentInParent<EdgeDetector>();
+			EdgeDetector edgeDetector = collision.gameObject.GetComponentInParent<EdgeDetector>();
 			//Debug.Log(point);
 			float distance = 0.001f;
 			// EdgeDetector가 있고 모서리 데이터가 있는지 확인
+			await slicer.SliceAsync(plane);
+
 			if (edgeDetector != null)
 			{
 				List<Vector3> edges = edgeDetector.GetEdgePositions();
@@ -144,8 +171,13 @@ namespace BzKovSoft.ObjectSlicer.Samples
 					if (IsPointOnEdge(edgeStart, edgeEnd, point, distance))
 					{
 
-						// knife와 선분이 접촉했다면 이곳에서 원하는 작업을 수행
-						await slicer.SliceAsync(plane);
+                        // knife와 선분이 접촉했다면 이곳에서 원하는 작업을 수행
+                        if (force > 2f)
+                        {
+							Debug.Log(force);
+
+						}
+
 					}
 					// 라인 그리기
 					// 모서리 정보 출력
@@ -202,7 +234,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		//{
 		//	Debug.Log("Cube Trigger");
 		//	ps.GetTriggerParticles(ParticleSystemTriggerEventType.Inside, inside);
-			
+
 		//	foreach (var v in inside)
 		//	{
 		//		Debug.Log("CWube Trigger2");
@@ -216,4 +248,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 
 	}
+
+
+
 }

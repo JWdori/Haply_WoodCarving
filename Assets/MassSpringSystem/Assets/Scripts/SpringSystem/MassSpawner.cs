@@ -17,7 +17,7 @@
  * UpdatePositions functions are therefore translated from the Mass Spring system
  * coordㄹinates to Unity world coordinates by swapping Y and Z values. 
  */
-
+using System.Collections.Generic; 
 using UnityEngine;
 using System.Collections;
 
@@ -25,20 +25,41 @@ public class MassSpawner : MonoBehaviour
 {
     public GameObject MassPrefab;
 
-
     private float MassUnitSize;
-    private ArrayList Primitives = new ArrayList();
+    private List<GameObject> Primitives = new List<GameObject>();
     private Vector3[] positions;
+    private Dictionary<GameObject, Vector3> initialPositions = new Dictionary<GameObject, Vector3>();
+
+
+
+
+
+
 
     //===========================================================================================
     //Overrides
     //===========================================================================================
     void FixedUpdate()
     {
-        int numPositions = Primitives.Count;
-        for (int i = 0; i < numPositions; ++i)
-            ((GameObject)Primitives[i]).transform.position = TranslateToUnityWorldSpace(positions[i]);
+        float distanceThreshold = 0.05f; // 오브젝트가 이 거리 이상 벗어나면 파괴
+
+        for (int i = 0; i < Primitives.Count; ++i)
+        {
+            GameObject currentPrimitive = Primitives[i];
+            Vector3 currentPosition = currentPrimitive.transform.position; // 현재 오브젝트의 실제 위치
+
+            // 초기 위치와 현재 위치 사이의 거리가 임계값을 초과하면 파괴
+            if (initialPositions.ContainsKey(currentPrimitive) &&
+                Vector3.Distance(initialPositions[currentPrimitive], currentPosition) > distanceThreshold)
+            {
+                Destroy(currentPrimitive);
+                Primitives.RemoveAt(i);
+                initialPositions.Remove(currentPrimitive);
+                i--; // 인덱스 조정
+            }
+        }
     }
+
 
     //===========================================================================================
     // Setter Functions
@@ -70,7 +91,18 @@ public class MassSpawner : MonoBehaviour
             springMassObject.transform.SetParent(woodParent.transform);
 
             springMassObject.transform.localScale = Vector3.one * MassUnitSize;
-            Primitives.Add(springUnit);
+
+            Rigidbody rb = springMassObject.AddComponent<Rigidbody>();
+            rb.mass = 100000.0f; // 기본 mass 값 설정
+            rb.drag = Mathf.Infinity; // 이론적으로 무한대 값을 설정할 수 있으나, 실제로는 매우 큰 값이 됩니다.
+            rb.angularDrag = Mathf.Infinity; // 회전 저항도 무한대로 설정
+            rb.useGravity = false;
+            rb.isKinematic = true;
+
+
+            Primitives.Add(springMassObject); // springMassObject는 이미 GameObject 타입입니다.
+            initialPositions[springMassObject] = worldPosition; // 초기 위치 저장
+
         }
     }
 

@@ -40,7 +40,7 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
         {
             // adjust Fixed Timestep from inspector to compare and understand for demo
             // don't do that in real case, prefer change from ProjectSettings>Time panel
-            Time.fixedDeltaTime = 1f / physicsFrequency;
+            //Time.fixedDeltaTime = 1f / physicsFrequency;
 
             if (hapticThread.isInitialized)
                 hapticsFrequencyText.text = $"haptics : {hapticThread.actualFrequency}Hz";
@@ -110,6 +110,7 @@ namespace Samples.Haply.HapticsAndPhysicsEngine
                 if (physicMaterial == null) return; // Check if physicMaterial exists
 
                 var text = $"PhysicsMaterial: {physicMaterial.name.Replace("(Instance)", "")} \n" +
+                    $"Name: {touchedObject.gameObject.name} \n" +
                            $"dynamic friction: {physicMaterial.dynamicFriction}, static friction: {physicMaterial.staticFriction}\n";
 
                 // display touched rigidbody infos on screen

@@ -98,7 +98,7 @@ public class EdgeDetector : MonoBehaviour
     }
     void OnDrawGizmos()
     {
-        
+
         // 꼭짓점 표시
         Gizmos.color = Color.red;
         float vertexSize = 0.01f;
@@ -116,6 +116,27 @@ public class EdgeDetector : MonoBehaviour
         vertices.Clear(); // 꼭짓점 정보 초기화
         DetectEdges();
         mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges); // 수정: 꼭짓점 정보 추가
+
+        // 새로운 메시 생성
+        Mesh newMesh = CreateNewMeshBasedOnEdges();
+
+        // 새로운 게임 오브젝트 생성
+        GameObject newObject = new GameObject("ReducedMeshObject");
+        newObject.transform.SetParent(transform);
+        newObject.transform.localPosition = Vector3.zero;
+        newObject.transform.localScale = Vector3.one * 0.99f; // 0.1만큼 축소
+
+        // 메시 필터와 메시 렌더러 추가
+        MeshFilter meshFilter = newObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = newMesh;
+        MeshRenderer meshRenderer = newObject.AddComponent<MeshRenderer>();
+        meshRenderer.material = new Material(Shader.Find("Standard"));
+
+        // 콜라이더 추가
+        MeshCollider meshCollider = newObject.AddComponent<MeshCollider>();
+        meshCollider.sharedMesh = newMesh;
+
+        mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges);
         Debug.Log(gameObject.name + " : " + edges.Count);
     }
 
@@ -127,5 +148,24 @@ public class EdgeDetector : MonoBehaviour
     public List<Vector3> GetVertexPositions() // 수정: 꼭짓점 정보 반환
     {
         return vertices;
+    }
+
+
+    private Mesh CreateNewMeshBasedOnEdges()
+    {
+        Mesh newMesh = new Mesh();
+
+        // 기존 메시의 정점 복사
+        newMesh.vertices = mesh.vertices;
+
+        // 기존 메시의 삼각형(인덱스) 복사
+        newMesh.triangles = mesh.triangles;
+
+        // 기타 필요한 메시 데이터 복사
+        newMesh.normals = mesh.normals;
+        newMesh.uv = mesh.uv;
+
+        return newMesh;
+
     }
 }

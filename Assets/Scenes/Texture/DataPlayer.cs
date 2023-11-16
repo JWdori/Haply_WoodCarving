@@ -40,7 +40,7 @@ public class DataPlayer : MonoBehaviour
         // CSV 파일에서 데이터를 읽어와서 lines 배열에 저장
         if (csvFile != null)
             lines = csvFile.text.Split(new char[] { '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
-        Debug.Log("World Scale: " + transform.lossyScale);
+        //Debug.Log("World Scale: " + transform.lossyScale);
 
     }
 

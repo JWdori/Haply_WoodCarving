@@ -2,6 +2,7 @@ using System;
 using Haply.HardwareAPI.Unity;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 /// <summary>
 /// <b>EXPERIMENTAL: </b><br/>
@@ -79,6 +80,9 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     public float linearLimit = 0.001f;
     public float limitSpring = 500000f;
     public float limitDamper = 10000f;
+    public float MainForce = 0;
+
+    public CommonData commonData;
 
     private ConfigurableJoint m_joint;
     private Rigidbody m_rigidbody;
@@ -95,7 +99,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     [Tooltip("Apply force only when a collision is detected (prevent air friction feeling)")]
     public bool collisionDetection;
     public List<Collider> touched = new();
-
+    public float mass;
     private void Awake()
     {
         // find the HapticThread object before the first FixedUpdate() call
@@ -125,21 +129,29 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     }
     private Vector3 ForceCalculation(in Vector3 position, in Vector3 velocity, in AdditionalData additionalData)
     {
+
         var force = additionalData.physicsCursorPosition - position;
         force *= stiffness;
         force -= velocity * damping;
+
         if (!forceEnabled || (collisionDetection && !additionalData.isTouching))
         {
             // Don't compute forces if there are no collisions which prevents feeling drag/friction while moving through air. 
             force = new Vector3(forceX, forceY, forceZ);
         }
         force += Gravitiy();
+        MainForce = force.magnitude;
+        commonData.SetData(MainForce, velocity);
+
         if (isColliding)
         {
-            Debug.Log($"Calculated Force: {force.magnitude} Newtons");
+            //Debug.Log($"Calculated Force: {MainForce} Newtons");
         }
         return force;
     }
+
+
+
 
     private void FixedUpdate() =>
         // Update AdditionalData 
@@ -181,6 +193,12 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
             m_rigidbody.useGravity = false;
             m_rigidbody.isKinematic = false;
             m_rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+
+            m_rigidbody.constraints = 
+                          RigidbodyConstraints.FreezeRotationX |
+                          RigidbodyConstraints.FreezeRotationY |
+                          RigidbodyConstraints.FreezeRotationZ;
         }
 
         // Connect with cursor rigidbody with a spring/damper joint and locked rotation
