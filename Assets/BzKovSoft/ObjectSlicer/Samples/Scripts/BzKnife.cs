@@ -80,9 +80,19 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		}
 		private void Update()
 		{
-			collisionStaySound.volume = collisionStayVolume;
 
-			collisionEnterSound.volume = collisionEnterVolume;
+
+			// 오브젝트의 forward 벡터
+			Vector3 objectForward = transform.forward;
+
+			// z축 벡터 (Unity의 전역 좌표계에서 z축은 Vector3.forward로 표현됩니다)
+			Vector3 zAxis = Vector3.forward;
+
+			// 두 벡터 사이의 각도 계산
+			float angle = Vector3.Angle(objectForward, zAxis);
+
+			// 각도 출력
+			Debug.Log("Angle between object and z-axis: " + angle);
 			_prevPos = _pos;
 			_pos = transform.position;
 			//지울 부분
@@ -176,7 +186,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnCollisionStay(Collision collision)
         {
-			if (!collisionStaySound.isPlaying || !collisionEnterSound.isPlaying)
+			if (collisionStaySound.isPlaying == false && collisionEnterSound.isPlaying ==false)
 			{
 				collisionStaySound.Play();
 			}
@@ -299,7 +309,8 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnCollisionEnter(Collision collision)
 		{
-			if (!collisionEnterSound.isPlaying)
+
+			if (collisionStaySound.isPlaying == false && collisionEnterSound.isPlaying ==false)
 			{
 				if (force > 5)
 				{
@@ -378,18 +389,6 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		}
 
 
-		private void CalculateContactAngle(GameObject objectA, GameObject objectB)
-		{
-			if (objectA == null || objectB == null)
-			{
-				return;
-			}
-			// objectA와 objectB의 상대적인 회전 각도를 계산
-			Quaternion relativeRotation = objectA.transform.rotation * Quaternion.Inverse(objectB.transform.rotation);
-
-			// 상대적인 각도를 Euler 각도로 변환하여 Z 축 값을 추출하고 정수로 반올림
-			int relativeRotationZ = Mathf.RoundToInt(relativeRotation.eulerAngles.x);
-		}
 
 
 		////이제 필요 없음
@@ -413,6 +412,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		//{
 		//	Debug.Log($"Cube Collision : {other.name}");
 		//}
+
 
 
 	}

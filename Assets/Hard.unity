@@ -2201,7 +2201,7 @@ MonoBehaviour:
   randomizeVertices: 0.5
   deformRadius: 0.1
   deformMultiplier: 100
-  maximumDeformation: 0.05
+  maximumDeformation: 0.1
   minimumDeformationImpulse: 0.01
   repairState: 1
   deformState: 1
@@ -2219,7 +2219,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 864955403}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 05e355325b850fb4ab825d44c8189a47, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -4627,7 +4627,7 @@ MonoBehaviour:
   forceY: 0
   forceZ: 0
   forceEnabled: 0
-  stiffness: 400
+  stiffness: 460
   damping: 0
   EndPoint: {fileID: 0}
   complexJoint: 1

@@ -66,7 +66,7 @@ public class RMD_Deformation : MonoBehaviour {
         collisionDirection = new GameObject("CollisionDirection").transform;
         collisionDirection.SetParent(transform, false);
         woodFxEmission = woodFx.emission;
-
+      
     }
 
     private void OnEnable() {
@@ -138,8 +138,8 @@ public class RMD_Deformation : MonoBehaviour {
             force = commonData.GetData();
             EdgeCheck = commonData.GetEdge();
         }
-
-        EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
+        //Debug.Log(force+5);
+        //EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
 
         //if (edgeDetector != null)
         //{
@@ -370,8 +370,6 @@ public class RMD_Deformation : MonoBehaviour {
                                 vertices[k] = originalMeshData[i].meshVerts[k] + (vertices[k] - originalMeshData[i].meshVerts[k]).normalized * (maximumDeformation);
 
                             overallDeform += (damage * (deformMultiplier)) / vertices.Length;
-                            woodFxEmission.enabled = true;
-
                         }
 
                     }
@@ -403,24 +401,26 @@ public class RMD_Deformation : MonoBehaviour {
     /// </summary>
     /// <param name="collision">Collision.</param>
     public void OnCollisionStay(Collision collision) {
-        EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
-        float distance = 0.005f;
-        if (edgeDetector != null)
+
+        if (gameObject.scene.name == "Hard")
         {
-            List<Vector3> edges = edgeDetector.GetEdgePositions();
-            // 모서리 그리기
-            for (int i = 0; i < edges.Count; i += 2)
+            EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
+            float distance = 0.005f;
+            if (edgeDetector != null)
             {
-                Vector3 edgeStart = transform.TransformPoint(edges[i]);
-                Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
-                //CalculateContactAngle(angleObject, otherGameObject);
-                Vector3 planePoint = collision.gameObject.transform.position; // angleObject의 중심 좌표
-                if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
+                List<Vector3> edges = edgeDetector.GetEdgePositions();
+                // 모서리 그리기
+                for (int i = 0; i < edges.Count; i += 2)
                 {
-                    if (((1 << collision.gameObject.layer) & deformFilter) != 0)
+                    Vector3 edgeStart = transform.TransformPoint(edges[i]);
+                    Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
+                    //CalculateContactAngle(angleObject, otherGameObject);
+                    Vector3 planePoint = collision.gameObject.transform.position; // angleObject의 중심 좌표
+                    if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
                     {
-                        if (force > 2)
+                        if (((1 << collision.gameObject.layer) & deformFilter) != 0)
                         {
+
 
                             if (force < minimumDeformationImpulse)
                                 force = 0f;
@@ -443,13 +443,48 @@ public class RMD_Deformation : MonoBehaviour {
                                 latestProcessedVertexCount = 0;
 
                             }
+
                         }
                     }
+
+
+
                 }
 
+            }
+        }else if(gameObject.scene.name == "Clay")
+        {
 
+
+            if (((1 << collision.gameObject.layer) & deformFilter) != 0)
+            {
+
+
+                if (force < minimumDeformationImpulse)
+                {
+                    force = 0f;
+                }
+                else if (force > 10f)
+                {
+                    force = 10f;
+                }
+                else if (force > 0f)
+                {
+
+                    repairState = RepairState.Repaired;
+                    deformState = DeformState.Deforming;
+
+                    contactPoint = new ContactPoint();
+                    contactPoint = collision.GetContact(0);
+
+                    if (meshFilters != null && meshFilters.Length >= 1)
+                        DamageMesh(force);
+
+                    latestProcessedVertexCount = 0;
+                }
 
             }
+            
 
         }
 
@@ -464,38 +499,32 @@ public class RMD_Deformation : MonoBehaviour {
 
     public void OnCollisionEnter(Collision collision)
     {
-        // 충돌 지점의 법선 벡터
-        Vector3 collisionNormal = collision.contacts[0].normal;
 
-        // 충돌한 오브젝트의 속도 벡터 (이동 방향)
-        Vector3 otherVelocity = collision.rigidbody.velocity;
-
-        // 내적을 사용하여 두 벡터 사이의 코사인 값을 계산
-        float dot = Vector3.Dot(collisionNormal.normalized, otherVelocity.normalized);
-
-        // 코사인 역함수를 사용하여 라디안 값을 구하고, 이를 도(degree)로 변환
-        float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
-
-        // 각도를 콘솔에 출력
-        EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
-        float distance = 0.005f;
-        if (edgeDetector != null)
+        if (gameObject.scene.name == "Hard")
         {
-            List<Vector3> edges = edgeDetector.GetEdgePositions();
-            // 모서리 그리기
-            for (int i = 0; i < edges.Count; i += 2)
+            EdgeDetector edgeDetector = GetComponent<EdgeDetector>();
+
+            float distance = 0.005f;
+            if (edgeDetector != null)
             {
-                Vector3 edgeStart = transform.TransformPoint(edges[i]);
-                Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
-                //CalculateContactAngle(angleObject, otherGameObject);
-                Vector3 planePoint = collision.gameObject.transform.position; // angleObject의 중심 좌표
-                if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
+                List<Vector3> edges = edgeDetector.GetEdgePositions();
+                // 모서리 그리기
+                for (int i = 0; i < edges.Count; i += 2)
                 {
-                    if (((1 << collision.gameObject.layer) & deformFilter) != 0)
+                    Vector3 edgeStart = transform.TransformPoint(edges[i]);
+                    Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
+                    //CalculateContactAngle(angleObject, otherGameObject);
+                    Vector3 planePoint = collision.gameObject.transform.position; // angleObject의 중심 좌표
+
+
+
+
+
+                    if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
                     {
-                        if (force > 2)
+                        if (((1 << collision.gameObject.layer) & deformFilter) != 0)
                         {
-                            Debug.Log("Enter" + force);
+
 
                             if (force < minimumDeformationImpulse)
                                 force = 0f;
@@ -518,13 +547,48 @@ public class RMD_Deformation : MonoBehaviour {
                                 latestProcessedVertexCount = 0;
 
                             }
+
                         }
                     }
+
+
+
                 }
 
+            }
+        }
+        else if (gameObject.scene.name == "Clay")
+        {
 
+            if (((1 << collision.gameObject.layer) & deformFilter) != 0)
+            {
+
+
+                if (force < minimumDeformationImpulse)
+                {
+                    force = 0f;
+                }
+                else if (force > 10f)
+                {
+                    force = 10f;
+                }
+                else if (force > 0f)
+                {
+
+                    repairState = RepairState.Repaired;
+                    deformState = DeformState.Deforming;
+
+                    contactPoint = new ContactPoint();
+                    contactPoint = collision.GetContact(0);
+
+                    if (meshFilters != null && meshFilters.Length >= 1)
+                        DamageMesh(force);
+
+                    latestProcessedVertexCount = 0;
+                }
 
             }
+
 
         }
     }
