@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+
 [RequireComponent(typeof(MeshFilter))]
 public class EdgeDetector : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class EdgeDetector : MonoBehaviour
     private List<Vector3> vertices = new List<Vector3>(); // 꼭짓점 정보를 저장할 리스트 추가
     private Vector3 _previousMeshSize = Vector3.zero;
     private MainEdgeDetector mainEdgeDetector;
+    private GameObject reducedMeshObject; // 추가 메쉬 오브젝트 참조
 
     public delegate void EdgeDetectedHandler(string objectName, List<Vector3> edges, List<Vector3> vertices); // 수정: 꼭짓점 정보 추가
     public event EdgeDetectedHandler OnEdgesDetected;
@@ -33,8 +35,8 @@ public class EdgeDetector : MonoBehaviour
         mesh = GetComponent<MeshFilter>().mesh;
         if (mesh != null && _previousMeshSize != mesh.bounds.size)
         {
-            RefreshEdges();
             _previousMeshSize = mesh.bounds.size;
+            RefreshEdges();
         }
     }
 
@@ -99,15 +101,28 @@ public class EdgeDetector : MonoBehaviour
     void OnDrawGizmos()
     {
 
-        // 꼭짓점 표시
-        Gizmos.color = Color.red;
-        float vertexSize = 0.01f;
+        //// 꼭짓점 표시
+        //Gizmos.color = Color.red;
+        //float vertexSize = 0.01f;
 
-        foreach (Vector3 vertex in vertices)
-        {
-            Vector3 vertexPosition = transform.TransformPoint(vertex);
-            Gizmos.DrawSphere(vertexPosition, vertexSize);
-        }
+        //foreach (Vector3 vertex in vertices)
+        //{
+        //    Vector3 vertexPosition = transform.TransformPoint(vertex);
+        //    Gizmos.DrawSphere(vertexPosition, vertexSize);
+        //}
+
+
+
+        //Gizmos.color = Color.blue;
+
+        //for (int i = 0; i < edges.Count; i += 2)
+        //{
+        //    Vector3 edgeStart = transform.TransformPoint(edges[i]);
+        //    Vector3 edgeEnd = transform.TransformPoint(edges[i + 1]);
+
+        //    // 라인 그리기
+        //    Gizmos.DrawLine(edgeStart, edgeEnd);
+        //}
     }
 
     public void RefreshEdges()
@@ -115,31 +130,34 @@ public class EdgeDetector : MonoBehaviour
         edges.Clear();
         vertices.Clear(); // 꼭짓점 정보 초기화
         DetectEdges();
+
+        //// 새로운 메시 생성 또는 기존 메시 업데이트
+        //string reducedMeshObjectName = "ReducedMeshObject";
+
+        //// 기존의 동일한 이름을 가진 객체 찾기
+        //Transform existingObject = transform.Find(reducedMeshObjectName);
+        //if (existingObject != null)
+        //{
+        //    Destroy(existingObject.gameObject); // 기존 객체 제거
+        //}
+
+        //reducedMeshObject = new GameObject(reducedMeshObjectName);
+        //reducedMeshObject.transform.SetParent(transform);
+        //reducedMeshObject.transform.localPosition = Vector3.zero;
+        //reducedMeshObject.transform.localScale = Vector3.one * 0.99f; // 원본 메시보다 약간 작게 설정
+
+        //Mesh newMesh = CreateNewMeshBasedOnEdges();
+        //MeshFilter meshFilter = reducedMeshObject.AddComponent<MeshFilter>();
+        //meshFilter.mesh = newMesh;
+        //MeshRenderer meshRenderer = reducedMeshObject.AddComponent<MeshRenderer>();
+        //meshRenderer.material = new Material(Shader.Find("Standard"));
+        //MeshCollider meshCollider = reducedMeshObject.AddComponent<MeshCollider>();
+        //meshCollider.sharedMesh = newMesh;
+        //meshCollider.convex = true; // convex 속성을 true로 설정
+
         mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges); // 수정: 꼭짓점 정보 추가
-
-        // 새로운 메시 생성
-        Mesh newMesh = CreateNewMeshBasedOnEdges();
-
-        // 새로운 게임 오브젝트 생성
-        GameObject newObject = new GameObject("ReducedMeshObject");
-        newObject.transform.SetParent(transform);
-        newObject.transform.localPosition = Vector3.zero;
-        newObject.transform.localScale = Vector3.one * 0.99f; // 0.1만큼 축소
-
-        // 메시 필터와 메시 렌더러 추가
-        MeshFilter meshFilter = newObject.AddComponent<MeshFilter>();
-        meshFilter.mesh = newMesh;
-        MeshRenderer meshRenderer = newObject.AddComponent<MeshRenderer>();
-        meshRenderer.material = new Material(Shader.Find("Standard"));
-
-        // 콜라이더 추가
-        MeshCollider meshCollider = newObject.AddComponent<MeshCollider>();
-        meshCollider.sharedMesh = newMesh;
-
-        mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges);
         Debug.Log(gameObject.name + " : " + edges.Count);
     }
-
     public List<Vector3> GetEdgePositions()
     {
         return edges;
@@ -151,21 +169,24 @@ public class EdgeDetector : MonoBehaviour
     }
 
 
+
     private Mesh CreateNewMeshBasedOnEdges()
     {
         Mesh newMesh = new Mesh();
 
-        // 기존 메시의 정점 복사
+        // 기존 메시의 정점과 삼각형 데이터를 복사
         newMesh.vertices = mesh.vertices;
-
-        // 기존 메시의 삼각형(인덱스) 복사
         newMesh.triangles = mesh.triangles;
 
-        // 기타 필요한 메시 데이터 복사
+        // 기타 필요한 메시 데이터 복사 (옵션)
         newMesh.normals = mesh.normals;
         newMesh.uv = mesh.uv;
 
         return newMesh;
-
     }
+    // EdgeDetector 또는 MassSpawner 클래스 내부 또는 별도의 관리 클래스
+
+
+
+
 }

@@ -322,6 +322,7 @@ public class AdvancedPhysicsHapticEffector : MonoBehaviour
     /// <param name="collision">collision information</param>
     private void OnCollisionExit(Collision collision)
     {
+
         if (forceEnabled && collisionDetection && touched.Contains(collision.collider))
         {
             touched.Remove(collision.collider);

@@ -25,25 +25,43 @@ namespace BzKovSoft.ObjectSlicer.EventHandlers
 			}
 		}
 
-		public async Task ObjectSlicedAsync(GameObject original, BzSliceTryResult result)
-		{
-			// we need to wait one frame to allow destroyed component to be destroyed.
-			//returning null will make it wait 1 frame
-			await Task.Yield();
+        public async Task ObjectSlicedAsync(GameObject original, BzSliceTryResult result)
+        {
+            await Task.Yield();
 
-			var origRigid = original.GetComponent<Rigidbody>();
-			if (origRigid == null)
-				return;
+            var origRigid = original.GetComponent<Rigidbody>();
+            if (origRigid == null)
+                return;
 
-			foreach (var resultObject in result.resultObjects)
-			{
-				var rigid = resultObject.gameObject.GetComponent<Rigidbody>();
-				if (rigid == null)
-					continue;
+            // 슬라이스된 첫 번째 오브젝트를 참조점으로 사용
+            GameObject firstSlicedObject = null;
 
-				rigid.angularVelocity = origRigid.angularVelocity;
-				rigid.velocity = origRigid.velocity;
-			}
-		}
-	}
+            foreach (var resultObject in result.resultObjects)
+            {
+                var rigid = resultObject.gameObject.GetComponent<Rigidbody>();
+                if (rigid == null)
+                    continue;
+
+                rigid.angularVelocity = origRigid.angularVelocity;
+                rigid.velocity = origRigid.velocity;
+
+                if (firstSlicedObject == null)
+                {
+                    firstSlicedObject = resultObject.gameObject;
+                }
+                else
+                {
+                    // 슬라이스된 오브젝트들 간에 FixedJoint 추가
+                    var joint = resultObject.gameObject.AddComponent<FixedJoint>();
+                    joint.connectedBody = firstSlicedObject.GetComponent<Rigidbody>();
+                }
+            }
+        }
+        void OnDrawGizmos()
+        {
+
+        }
+
+
+    }
 }

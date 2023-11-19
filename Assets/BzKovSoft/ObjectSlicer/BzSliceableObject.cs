@@ -9,6 +9,8 @@ namespace BzKovSoft.ObjectSlicer
 	{
 		protected override AdapterAndMesh GetAdapterAndMesh(Renderer renderer)
 		{
+
+
 			var meshRenderer = renderer as MeshRenderer;
 
 			if (meshRenderer != null)
