@@ -34,8 +34,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		private Vector3 previousVelocity = Vector3.zero;
 		private Vector3 currentAcceleration = Vector3.zero;
-		[SerializeField] private ParticleSystem woodFx;
-		private ParticleSystem.EmissionModule woodFxEmission;
+
 		public List<AudioClip> audioClips; // 오디오 클립들을 저장할 리스트
 
 		private AudioSource collisionStaySound; // 충돌 시 재생될 오디오 클립
@@ -45,7 +44,21 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		public AudioClip collisionStayClip;
 		public AudioClip collisionEnterClip;         //          coll.HitCollider(hitDamage);
 													 //          wood.Hit(coll.index, hitDamage);
-													 // 오디오 볼륨을 인스펙터에서 조절할 수 있도록 합니다.
+
+
+
+		[SerializeField] private ParticleSystem woodFx;
+
+		private ParticleSystem.EmissionModule woodFxEmission;
+
+
+		float angle;
+		private float lastForce; // 마지막 충돌의 힘을 저장할 변수
+
+
+
+
+		// 오디오 볼륨을 인스펙터에서 조절할 수 있도록 합니다.
 		[Range(0f, 1f)]
 		public float collisionStayVolume = 1.0f;
 		[Range(0f, 1f)]
@@ -55,6 +68,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		private void Start()
 		{
+
 			// 각각의 AudioSource 컴포넌트 생성 또는 할당
 			collisionStaySound = gameObject.AddComponent<AudioSource>();
 			collisionEnterSound = gameObject.AddComponent<AudioSource>();
@@ -66,6 +80,9 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			collisionEnterSound.clip = collisionEnterClip;
 			collisionEnterSound.volume = collisionEnterVolume;
 
+
+			woodFxEmission = woodFx.emission;
+
 		}
 		private void FixedUpdate()
         {
@@ -73,8 +90,8 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 			Vector3 currentVelocity = commonData.GetDataVelo();
 			//currentAcceleration = (currentVelocity - previousVelocity) / Time.fixedDeltaTime;
-
-
+			force = commonData.GetData();
+			//Debug.Log(force);
 			// 현재 속도를 저장
 			//previousVelocity = currentVelocity;
 		}
@@ -84,15 +101,17 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 			// 오브젝트의 forward 벡터
 			Vector3 objectForward = transform.forward;
-
 			// z축 벡터 (Unity의 전역 좌표계에서 z축은 Vector3.forward로 표현됩니다)
 			Vector3 zAxis = Vector3.forward;
 
 			// 두 벡터 사이의 각도 계산
-			float angle = Vector3.Angle(objectForward, zAxis);
+			angle = Vector3.Angle(objectForward, zAxis);
 
 			// 각도 출력
-			Debug.Log("Angle between object and z-axis: " + angle);
+			//Debug.Log(angle);
+
+
+
 			_prevPos = _pos;
 			_pos = transform.position;
 			//지울 부분
@@ -114,11 +133,7 @@ namespace BzKovSoft.ObjectSlicer.Samples
 					}
 				}
 			}
-			// 현재 객체의 로컬 회전 각도를 오일러 각도 형식으로 얻기
-			Vector3 currentRotation = transform.localEulerAngles;
 
-			// X축 회전 각도 출력
-			//Debug.Log("X Rotation: " + currentRotation.x);
 			if (commonData != null)
 			{
 
@@ -186,18 +201,8 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 		async void OnCollisionStay(Collision collision)
         {
-			if (collisionStaySound.isPlaying == false && collisionEnterSound.isPlaying ==false)
-			{
-				collisionStaySound.Play();
-			}
 
 
-			if (angleObject != null)
-			{
-				//Debug.Log("Object X position: " + angleObject.transform.eulerAngles.x  + "  Object Y position: " + angleObject.transform.eulerAngles.y  +"  Object Z position: " + angleObject.transform.eulerAngles.z);
-
-			}
-			collisionEnterSound.Play();
 
 			GameObject otherGameObject = collision.gameObject;
 			other2 = otherGameObject;
@@ -219,7 +224,8 @@ namespace BzKovSoft.ObjectSlicer.Samples
 
 			if (collision.gameObject.scene.name == "Clay")
 			{
-
+				if (!collisionEnterSound.isPlaying && !collisionStaySound.isPlaying)
+					collisionStaySound.Play();
 			}
 			else if (collision.gameObject.scene.name == "Soft")
             {
@@ -228,16 +234,9 @@ namespace BzKovSoft.ObjectSlicer.Samples
 				{
 					return;
 				}
-				float rotationX = transform.eulerAngles.x;
+
 				EdgeDetector edgeDetector = collision.gameObject.GetComponentInParent<EdgeDetector>();
-				float distance = 0.005f;
-				// 회전 값을 360도 범위로 정규화
-				if (rotationX > 180)
-					rotationX -= 360;
-
-
-
-
+				float distance = 0.004f;
 				// EdgeDetector가 있고 모서리 데이터가 있는지 확인
 				if (edgeDetector != null)
 				{
@@ -247,60 +246,117 @@ namespace BzKovSoft.ObjectSlicer.Samples
 					{
 						Vector3 edgeStart = otherGameObject.transform.TransformPoint(edges[i]);
 						Vector3 edgeEnd = otherGameObject.transform.TransformPoint(edges[i + 1]);
-						//CalculateContactAngle(angleObject, otherGameObject);
 						_planePointToDraw = planePoint; // 평면 점 위치 업데이트
 
 						if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
 						{
-							commonData.SetEdge(true);
 
-							if (rotationX > 5f && rotationX <= 10f)
-							{
-								if (force > 1f)
-								{
-									await slicer.SliceAsync(plane);
-								}
-							}
-							else if (rotationX > 10f && rotationX <= 20f)
+							if (angle >= 1f && angle < 20f)
 							{
 								if (force > 2f)
 								{
+									woodFxEmission.enabled = true;
 									await slicer.SliceAsync(plane);
+                                }
+                                else
+                                {
+									woodFxEmission.enabled = false;
+
 								}
+							}
+							else if (angle >= 20f && angle < 32f)
+							{
+								if (force > 3f)
+								{
+									woodFxEmission.enabled = true;
+									await slicer.SliceAsync(plane);
+                                }
+                                else
+                                {
+									woodFxEmission.enabled = false;
+
+								}
+							}
+							else if (angle >= 32f && angle < 40f)
+							{
+								if (force > 5f)
+								{
+									lastForce = force;
+									woodFxEmission.enabled = true;
+									woodFx.Play();
+									await slicer.SliceAsync(plane);
+
+                                }
+                                else
+                                {
+									woodFxEmission.enabled = false;
+
+								}
+
+							}
+                        }
+                        else
+                        {
+							if (force > 8f)
+							{
+								lastForce = force;
 							}
 
 						}
-						else
-						{
-						}
 
-					}
+
+					} 
 
 				}
 			}
 
-			else if (collision.gameObject.scene.name == "Hard")
+			else if (collision.gameObject.scene.name == "Hard") 
 			{
+				lastForce = force;
 
-				float rotationX = transform.eulerAngles.x;
 
-				// 회전 값을 360도 범위로 정규화
-				if (rotationX > 180)
-					rotationX -= 360;
 
 			}
+
 
 		}
 
 		async void OnCollisionExit(Collision collision)
         {
-			if (collisionEnterSound.isPlaying || collisionStaySound.isPlaying)
+			woodFxEmission.enabled = false;
+			if (collision.gameObject.scene.name == "Hard")
             {
-				collisionEnterSound.Stop();
-				collisionStaySound.Stop();
+				if (lastForce > 8)
+				{
+					if (!collisionEnterSound.isPlaying)
+					{
+						Debug.Log(lastForce);
+						collisionEnterSound.Play();
+						lastForce = 0;
+					}
+				}
 			}
-
-
+			else if  (collision.gameObject.scene.name == "Soft")
+            {
+				if (lastForce > 4)
+				{
+					if (!collisionEnterSound.isPlaying) {
+					Debug.Log(lastForce);
+					collisionEnterSound.Play();
+						lastForce = 0;
+					}
+				}
+			}else if (gameObject.scene.name == "Clay")
+            {
+				
+					if (!collisionEnterSound.isPlaying)
+					{
+						collisionStaySound.Stop();
+						collisionEnterSound.Play();
+	
+					}
+				
+			}
 		}
 
 
@@ -310,21 +366,6 @@ namespace BzKovSoft.ObjectSlicer.Samples
 		async void OnCollisionEnter(Collision collision)
 		{
 
-			if (collisionStaySound.isPlaying == false && collisionEnterSound.isPlaying ==false)
-			{
-				if (force > 5)
-				{
-					collisionEnterSound.Play();
-				}
-			}
-
-
-
-			if (angleObject != null)
-			{
-				//Debug.Log("Object X position: " + angleObject.transform.eulerAngles.x  + "  Object Y position: " + angleObject.transform.eulerAngles.y  +"  Object Z position: " + angleObject.transform.eulerAngles.z);
-
-			}
 			var slicer = collision.gameObject.GetComponentInParent<IBzMeshSlicer>();
 			if (slicer == null)
 			{
@@ -349,23 +390,92 @@ namespace BzKovSoft.ObjectSlicer.Samples
 			Vector3 planeNormal = angleObject.transform.up; // angleObject의 상방 방향 (기울임에 따라 바뀜)
 			Plane plane = new Plane(planeNormal, planePoint);
 
-			if (collision.gameObject.scene.name== "Clay")
+			if (gameObject.scene.name== "Soft")
 			{
-				await slicer.SliceAsync(plane);
 
-			}
-			else if (collision.gameObject.scene.name == "Hard")
-			{
-				float rotationX = transform.eulerAngles.x;
-				// 회전 값을 360도 범위로 정규화
-				if (rotationX > 180)
-					rotationX -= 360;
+				EdgeDetector edgeDetector = collision.gameObject.GetComponentInParent<EdgeDetector>();
+				float distance = 0.004f;
 
-			}
+
+				// EdgeDetector가 있고 모서리 데이터가 있는지 확인
+				if (edgeDetector != null)
+				{
+					List<Vector3> edges = edgeDetector.GetEdgePositions();
+					// 모서리 그리기
+					for (int i = 0; i < edges.Count; i += 2)
+					{
+						Vector3 edgeStart = otherGameObject.transform.TransformPoint(edges[i]);
+						Vector3 edgeEnd = otherGameObject.transform.TransformPoint(edges[i + 1]);
+						_planePointToDraw = planePoint; // 평면 점 위치 업데이트
+
+						if (IsPointOnEdge(edgeStart, edgeEnd, planePoint, distance))
+						{
+
+							if (angle >= 1f && angle < 20f)
+                            {
+								if(force > 2f)
+                                {
+									await slicer.SliceAsync(plane);
+								}
+							}
+							else if(angle >= 20f && angle < 32f)
+                            {
+								if (force > 3f)
+								{
+									await slicer.SliceAsync(plane);
+								}
+							}
+							else if (angle >= 32f && angle < 40f)
+                            {
+								if (force > 5f)
+								{
+									await slicer.SliceAsync(plane);
+								}
+
+                            }
+
+						}
+						else
+						{
+							if (force > 8f)
+							{
+
+							}
+						}
+
+					}
+
+				}
+			}else if (gameObject.scene.name == "Hard")
+            {
+
+            }
 
 		
 
 		}
+
+
+
+		void OnGUI()
+		{
+			if (gameObject.scene.name == "Soft") {
+				// 화면의 오른쪽 상단에 위치시키기 위한 설정
+				int screenWidth = Screen.width;
+			int screenHeight = Screen.height;
+			int boxWidth = 200;
+			int boxHeight = 50;
+
+			// 상자의 위치를 설정
+			Rect boxRect = new Rect(screenWidth - boxWidth - 10, 10, boxWidth, boxHeight);
+
+			// 상자와 레이블을 그리기
+			GUI.Box(boxRect, "Info");
+			GUI.Label(new Rect(screenWidth - boxWidth, 30, boxWidth, 20), $"Angle: {angle}");
+			GUI.Label(new Rect(screenWidth - boxWidth, 50, boxWidth, 20), $"Force: {force}");
+		}
+		}
+
 		private Vector3 GetCollisionPoint()
 		{
 			Vector3 distToObject = transform.position - Origin;

@@ -85,7 +85,6 @@ namespace BzKovSoft.ObjectSlicer.EventHandlers
 
 		void OnGUI()
 		{
-			GUI.Label(new Rect(10, 10, 2000, 2000), _drawText);
 		}
 	}
 }

@@ -156,7 +156,6 @@ public class EdgeDetector : MonoBehaviour
         //meshCollider.convex = true; // convex 속성을 true로 설정
 
         mainEdgeDetector.OnEdgesDetectedHandler(objectName, edges); // 수정: 꼭짓점 정보 추가
-        Debug.Log(gameObject.name + " : " + edges.Count);
     }
     public List<Vector3> GetEdgePositions()
     {

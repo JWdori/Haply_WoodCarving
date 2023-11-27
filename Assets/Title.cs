@@ -15,12 +15,11 @@ public class Title : MonoBehaviour
 
     public void ClickSoft()
     {
-        Debug.Log("로드");
+        SceneManager.LoadScene("Soft");
     }
 
     public void ClickClay()
     {
-        Debug.Log("게임 종료");
-        Application.Quit();
+        SceneManager.LoadScene("Clay");
     }
 }

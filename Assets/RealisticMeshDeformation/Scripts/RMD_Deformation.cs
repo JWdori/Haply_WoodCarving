@@ -59,6 +59,10 @@ public class RMD_Deformation : MonoBehaviour {
     private ParticleSystem woodFx;
     private ParticleSystem.EmissionModule woodFxEmission;
 
+    float angle;
+
+    private float lastForce; // 마지막 충돌의 힘을 저장할 변수
+
 
 
     public void Awake() {
@@ -66,7 +70,6 @@ public class RMD_Deformation : MonoBehaviour {
         collisionDirection = new GameObject("CollisionDirection").transform;
         collisionDirection.SetParent(transform, false);
         woodFxEmission = woodFx.emission;
-      
     }
 
     private void OnEnable() {
@@ -124,6 +127,7 @@ public class RMD_Deformation : MonoBehaviour {
     }
 
     private void Update() {
+
         //  If vehicle is not deformed completely, and deforming is enabled, deform all meshes to their damaged structions.
         if (deformState == DeformState.Deforming)
             UpdateDeformation();
@@ -158,8 +162,40 @@ public class RMD_Deformation : MonoBehaviour {
         //}
 
 
+        // 오브젝트의 forward 벡터
+        Vector3 objectForward = angleObject.gameObject.transform.forward;
+
+        // z축 벡터 (Unity의 전역 좌표계에서 z축은 Vector3.forward로 표현됩니다)
+        Vector3 zAxis = Vector3.forward;
+
+        // 두 벡터 사이의 각도 계산
+        angle = Vector3.Angle(objectForward, zAxis);
+
+        // 각도 출력
+        //Debug.Log(angle);
 
     }
+
+
+
+    void OnGUI()
+    {
+        // 화면의 오른쪽 상단에 위치시키기 위한 설정
+        int screenWidth = Screen.width;
+        int screenHeight = Screen.height;
+        int boxWidth = 200;
+        int boxHeight = 50;
+
+        // 상자의 위치를 설정
+        Rect boxRect = new Rect(screenWidth - boxWidth - 10, 10, boxWidth, boxHeight);
+
+        // 상자와 레이블을 그리기
+        GUI.Box(boxRect, "Info");
+        GUI.Label(new Rect(screenWidth - boxWidth, 30, boxWidth, 20), $"Angle: {angle}");
+        GUI.Label(new Rect(screenWidth - boxWidth, 50, boxWidth, 20), $"Force: {force}");
+    }
+
+
     void OnDrawGizmos()
     {
         if (meshFilters != null)
@@ -421,27 +457,59 @@ public class RMD_Deformation : MonoBehaviour {
                         if (((1 << collision.gameObject.layer) & deformFilter) != 0)
                         {
 
-
-                            if (force < minimumDeformationImpulse)
-                                force = 0f;
-
-                            if (force > 10f)
-                                force = 10f;
-
-                            if (force > 0f)
+                            if (angle >= 5 && angle <= 20)
                             {
+                                if (force < 10)
+                                    force = 0f;
 
-                                repairState = RepairState.Repaired;
-                                deformState = DeformState.Deforming;
+                                if (force > 10f)
+                                {
+                                    lastForce = force;
+                                    force = 10f;
+                                }
 
-                                contactPoint = new ContactPoint();
-                                contactPoint = collision.GetContact(0);
+                                if (force > 0f)
+                                {
 
-                                if (meshFilters != null && meshFilters.Length >= 1)
-                                    DamageMesh(force);
+                                    repairState = RepairState.Repaired;
+                                    deformState = DeformState.Deforming;
 
-                                latestProcessedVertexCount = 0;
+                                    contactPoint = new ContactPoint();
+                                    contactPoint = collision.GetContact(0);
 
+                                    if (meshFilters != null && meshFilters.Length >= 1)
+                                        DamageMesh(force);
+
+                                    latestProcessedVertexCount = 0;
+
+                                }
+                            }
+                            else
+                            {
+                                if (force < 20)
+                                    force = 0f;
+
+                                if (force > 20f)
+                                {
+                                    lastForce = force;
+                                    force = 10f;
+                                }
+
+                                if (force > 0f)
+                                {
+
+                                    repairState = RepairState.Repaired;
+                                    deformState = DeformState.Deforming;
+
+                                    contactPoint = new ContactPoint();
+                                    contactPoint = collision.GetContact(0);
+
+                                    if (meshFilters != null && meshFilters.Length >= 1)
+                                        DamageMesh(force);
+
+                                    latestProcessedVertexCount = 0;
+
+                                }
                             }
 
                         }
@@ -459,16 +527,23 @@ public class RMD_Deformation : MonoBehaviour {
             if (((1 << collision.gameObject.layer) & deformFilter) != 0)
             {
 
-
                 if (force < minimumDeformationImpulse)
                 {
                     force = 0f;
                 }
-                else if (force > 10f)
+                if (force > 0f && force < 0.6f)
                 {
-                    force = 10f;
+                    force *= 2.5f;
                 }
-                else if (force > 0f)
+                else if (force > 0.6f && force < 1.2f)
+                {
+                    force *= 1.8f;
+                }
+                else if (force > 3f)
+                {
+                    force *= 1f;
+                }
+                if (force > 0f)
                 {
 
                     repairState = RepairState.Repaired;
@@ -494,6 +569,15 @@ public class RMD_Deformation : MonoBehaviour {
     }
     public void OnCollisionExit(Collision collision)
     {
+        if (gameObject.scene.name == "Hard") {
+            if (lastForce > 9)
+            {
+                Debug.Log(lastForce);
+                woodFxEmission.enabled = true;
+                woodFx.Play();
+                lastForce = 0;
+            }
+        }
 
     }
 
@@ -524,28 +608,59 @@ public class RMD_Deformation : MonoBehaviour {
                     {
                         if (((1 << collision.gameObject.layer) & deformFilter) != 0)
                         {
-
-
-                            if (force < minimumDeformationImpulse)
-                                force = 0f;
-
-                            if (force > 10f)
-                                force = 10f;
-
-                            if (force > 0f)
+                            if (angle >= 5 && angle <= 20)
                             {
+                                if (force < 10)
+                                    force = 0f;
 
-                                repairState = RepairState.Repaired;
-                                deformState = DeformState.Deforming;
+                                if (force > 10f)
+                                {
+                                    lastForce = force;
+                                    force = 10f;
+                                }
 
-                                contactPoint = new ContactPoint();
-                                contactPoint = collision.GetContact(0);
+                                if (force > 0f)
+                                {
 
-                                if (meshFilters != null && meshFilters.Length >= 1)
-                                    DamageMesh(force);
+                                    repairState = RepairState.Repaired;
+                                    deformState = DeformState.Deforming;
 
-                                latestProcessedVertexCount = 0;
+                                    contactPoint = new ContactPoint();
+                                    contactPoint = collision.GetContact(0);
 
+                                    if (meshFilters != null && meshFilters.Length >= 1)
+                                        DamageMesh(force);
+
+                                    latestProcessedVertexCount = 0;
+
+                                }
+                            }
+                            else
+                            {
+                                if (force < 20)
+                                    force = 0f;
+
+                                if (force > 20f)
+                                {
+                                    lastForce = force;
+                                    force = 10f;
+                                }
+
+                                if (force > 0f)
+                                {
+
+                                    repairState = RepairState.Repaired;
+                                    deformState = DeformState.Deforming;
+
+                                    contactPoint = new ContactPoint();
+                                    contactPoint = collision.GetContact(0);
+
+                                    if (meshFilters != null && meshFilters.Length >= 1)
+                                        DamageMesh(force);
+
+                                    latestProcessedVertexCount = 0;
+
+                                }
                             }
 
                         }
@@ -568,11 +683,19 @@ public class RMD_Deformation : MonoBehaviour {
                 {
                     force = 0f;
                 }
-                else if (force > 10f)
+                if (force > 0f && force < 0.6f)
                 {
-                    force = 10f;
+                    force *= 1.5f;
                 }
-                else if (force > 0f)
+                else if (force > 0.6f && force < 1.2f)
+                {
+                    force *= 1.25f;
+                }
+                else if (force > 3f)
+                {
+                    force *= 0.875f;
+                }
+                if (force > 0f)
                 {
 
                     repairState = RepairState.Repaired;

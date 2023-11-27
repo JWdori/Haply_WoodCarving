@@ -11,4 +11,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Hard.unity
     guid: 7a59e797586c14344844fbe90a229bd5
+  - enabled: 1
+    path: Assets/Clay.unity
+    guid: ebae5cd51eedaad43b57d62e4c3aa159
+  - enabled: 1
+    path: Assets/Soft.unity
+    guid: 7253ee8d63ab6344797ea672af6c74dd
   m_configObjects: {}
